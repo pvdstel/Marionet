@@ -88,6 +88,7 @@ namespace Marionet.App.SignalR
             {
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     logger.LogInformation($"Connecting to {uri}...");
                     await connection.StartAsync(cancellationToken);
                     logger.LogInformation($"Connected to {uri}");
@@ -102,6 +103,7 @@ namespace Marionet.App.SignalR
                 }
                 catch (OperationCanceledException)
                 {
+                    logger.LogDebug($"Connection to {uri} aborted");
                     break;
                 }
             }

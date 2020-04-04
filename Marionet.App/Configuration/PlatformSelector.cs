@@ -1,14 +1,12 @@
 ﻿using Marionet.Core.Input;
+using Marionet.Core.Net;
 using Marionet.Core.Windows;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace Marionet.App.Configuration
 {
-    internal static class InputManagerSelector
+    internal static class PlatformSelector
     {
         public static IInputManager GetInputManager()
         {
@@ -17,6 +15,15 @@ namespace Marionet.App.Configuration
                 return new WindowsInputManager();
             }
             throw new NotImplementedException("This operating system's input mechanism is not supported.");
+        }
+
+        public static INetwork GetNetwork()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return new WindowsNetwork();
+            }
+            throw new NotImplementedException("This operating system's network is not supported.");
         }
     }
 }

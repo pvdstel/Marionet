@@ -33,10 +33,11 @@ namespace Marionet.App
             services.AddSignalR()
                 .AddMessagePackProtocol();
 
+            services.AddSingleton<Supervisor>();
             services.AddSingleton<ClientIdentifierService>();
             services.AddSingleton<WorkspaceClientManager>();
             services.AddSingleton<WorkspaceNetwork>();
-            services.AddSingleton<IInputManager>(services => InputManagerSelector.GetInputManager());
+            services.AddSingleton<IInputManager>(services => PlatformSelector.GetInputManager());
             services.AddTransient<WorkspaceSettings, WorkspaceSettingsService>();
             services.AddSingleton<Workspace>();
         }
@@ -70,6 +71,7 @@ namespace Marionet.App
                 });
             });
 
+            app.ApplicationServices.GetService<Supervisor>().StartMonitoring();
             app.ApplicationServices.GetService<Workspace>().Initialize().Wait();
             app.ApplicationServices.GetService<WorkspaceClientManager>().Start();
         }

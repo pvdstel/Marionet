@@ -2,6 +2,7 @@
 using Marionet.Core;
 using Marionet.Core.Input;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace Marionet.App.Communication
         private readonly IInputManager inputManager;
         private readonly WorkspaceNetwork workspaceNetwork;
         private readonly IHubContext<NetHub, INetClient> netHub;
+        private readonly IHostApplicationLifetime hostApplicationLifetime;
         private readonly SemaphoreSlim mutationLock = new SemaphoreSlim(1, 1);
 
         public WorkspaceClientManager(
@@ -24,13 +26,15 @@ namespace Marionet.App.Communication
             ILogger<NetClient> clientLogger,
             IInputManager inputManager,
             WorkspaceNetwork workspaceNetwork,
-            IHubContext<NetHub, INetClient> netHub)
+            IHubContext<NetHub, INetClient> netHub,
+            IHostApplicationLifetime hostApplicationLifetime)
         {
             this.logger = logger;
             this.clientLogger = clientLogger;
             this.inputManager = inputManager;
             this.workspaceNetwork = workspaceNetwork;
             this.netHub = netHub;
+            this.hostApplicationLifetime = hostApplicationLifetime;
         }
 
         public void Start()
@@ -105,7 +109,7 @@ namespace Marionet.App.Communication
             logger.LogDebug($"Adding client for {uri}");
             NetClient client = new NetClient(uri, clientLogger, inputManager, workspaceNetwork);
             clients.Add(desktopName.NormalizeDesktopName(), client);
-            _ = client.Connect();
+            _ = client.Connect(hostApplicationLifetime.ApplicationStopping);
         }
 
         #region IDisposable Support
