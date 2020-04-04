@@ -1,18 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Marionet.App.Configuration;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Marionet.App
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
+            Configuration.Config.Load().Wait();
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -21,6 +17,16 @@ namespace Marionet.App
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.ConfigureKestrel(options =>
+                    {
+                        options.ConfigureHttpsDefaults(o =>
+                        {
+                            o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
+                            o.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => true;
+                            o.ServerCertificate = Certificate.ServerCertificate;
+                        });
+                    });
+                    webBuilder.UseUrls($"https://0.0.0.0:{Configuration.Config.ServerPort}");
                 });
     }
 }
