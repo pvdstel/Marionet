@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public class DesktopsChangedEventArgs
     {

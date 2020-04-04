@@ -1,6 +1,6 @@
 ﻿using Marionet.App.Communication;
 using Marionet.Core;
-using Marionet.Core.Net;
+using Marionet.Core.Communication;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;

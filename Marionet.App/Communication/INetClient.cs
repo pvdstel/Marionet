@@ -1,4 +1,4 @@
-﻿using Marionet.Core.Net;
+﻿using Marionet.Core.Communication;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

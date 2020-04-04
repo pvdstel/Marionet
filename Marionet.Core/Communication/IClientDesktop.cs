@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public interface IClientDesktop : IMouseController, IKeyboardController
     {

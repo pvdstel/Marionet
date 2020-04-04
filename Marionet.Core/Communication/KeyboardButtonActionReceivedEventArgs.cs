@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public class KeyboardButtonActionReceivedEventArgs : EventArgs
     {
@@ -12,7 +10,7 @@ namespace Marionet.Core.Net
             KeyCode = keyCode;
         }
 
-        public string From{ get; }
+        public string From { get; }
 
         public int KeyCode { get; }
     }

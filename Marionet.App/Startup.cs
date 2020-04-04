@@ -1,17 +1,16 @@
-using System;
 using Marionet.App.Authentication;
 using Marionet.App.Communication;
 using Marionet.App.Configuration;
 using Marionet.App.Core;
 using Marionet.Core;
 using Marionet.Core.Input;
-using Marionet.Core.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace Marionet.App
 {

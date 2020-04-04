@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public class ClientDisplaysChangedEventArgs : EventArgs
     {

@@ -1,9 +1,8 @@
-﻿using Marionet.Core.Input;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public interface IWorkspaceNetwork
     {
@@ -28,7 +27,7 @@ namespace Marionet.Core.Net
         event EventHandler<ClientConnectionChangedEventArgs> ClientResignedFromControl;
 
         event EventHandler<MouseMoveReceivedEventArgs> MouseMoveReceived;
-        
+
         event EventHandler<MouseMoveReceivedEventArgs> ControlledMouseMoveReceived;
 
         event EventHandler<MouseButtonActionReceivedEventArgs> PressMouseButtonReceived;

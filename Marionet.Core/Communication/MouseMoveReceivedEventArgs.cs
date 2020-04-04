@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public class MouseMoveReceivedEventArgs : EventArgs
     {
@@ -14,6 +12,6 @@ namespace Marionet.Core.Net
 
         public string From { get; }
 
-        public Point Position{ get; }
+        public Point Position { get; }
     }
 }

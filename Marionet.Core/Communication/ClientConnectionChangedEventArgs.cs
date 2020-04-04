@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public class ClientConnectionChangedEventArgs : EventArgs
     {

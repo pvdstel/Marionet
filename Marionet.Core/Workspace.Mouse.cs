@@ -1,5 +1,5 @@
-﻿using Marionet.Core.Input;
-using Marionet.Core.Net;
+﻿using Marionet.Core.Communication;
+using Marionet.Core.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;

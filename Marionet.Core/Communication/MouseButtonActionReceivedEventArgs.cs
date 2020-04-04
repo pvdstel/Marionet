@@ -1,13 +1,11 @@
 ﻿using Marionet.Core.Input;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Marionet.Core.Net
+namespace Marionet.Core.Communication
 {
     public class MouseButtonActionReceivedEventArgs : EventArgs
     {
-        public MouseButtonActionReceivedEventArgs(string from,  MouseButton button)
+        public MouseButtonActionReceivedEventArgs(string from, MouseButton button)
         {
             From = from;
             Button = button;
