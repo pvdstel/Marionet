@@ -5,20 +5,19 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 namespace Marionet.App.Communication
 {
     public class WorkspaceClientManager : IDisposable
     {
-        private Dictionary<string, NetClient> clients = new Dictionary<string, NetClient>();
+        private readonly Dictionary<string, NetClient> clients = new Dictionary<string, NetClient>();
         private readonly ILogger<WorkspaceClientManager> logger;
         private readonly ILogger<NetClient> clientLogger;
         private readonly IInputManager inputManager;
         private readonly WorkspaceNetwork workspaceNetwork;
         private readonly IHubContext<NetHub, INetClient> netHub;
-        private SemaphoreSlim mutationLock = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim mutationLock = new SemaphoreSlim(1, 1);
 
         public WorkspaceClientManager(
             ILogger<WorkspaceClientManager> logger,
