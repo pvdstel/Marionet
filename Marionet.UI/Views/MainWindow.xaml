@@ -57,6 +57,22 @@
                     Fill="#FF9100" />
                 <TextBlock Text="The Marionet service supervisor is not allowed to run by the run conditions." />
             </WrapPanel>
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsHostRunning}">
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Margin="3,0,13,0"
+                    Fill="#18C45A" />
+                <TextBlock Text="The Marionet host is active." />
+            </WrapPanel>
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsHostRunning}">
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Margin="3,0,13,0"
+                    Fill="#C41818" />
+                <TextBlock Text="The Marionet host is not active." />
+            </WrapPanel>
         </StackPanel>
 
         <WrapPanel Grid.Row="1" Margin="10">

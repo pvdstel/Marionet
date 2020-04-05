@@ -3,6 +3,7 @@ using Marionet.Core.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
@@ -28,10 +29,12 @@ namespace Marionet.App
 
         public static bool Running { get; private set; }
         public static bool RunningAllowed { get; private set; }
+        public static bool HostRunning { get; private set; }
 
         public static event EventHandler? Started;
         public static event EventHandler? Stopped;
         public static event EventHandler? RunningAllowedUpdated;
+        public static event EventHandler? HostRunningUpdated;
 
         private static event EventHandler? ShutdownRequested;
 
@@ -74,6 +77,7 @@ namespace Marionet.App
                     WriteDebugLine("Waiting for host termination...");
                     var stopReason = await stopReasonSource.Task;
                     var mayContinue = await roundEndSource.Task;
+                    UpdateHostRunning(false);
                     WriteDebugLine($"Host termination reason was: {stopReason}");
                     if (!mayContinue || stopReason == TerminationReason.Self || stopReason == TerminationReason.ShutdownRequested)
                     {
@@ -112,7 +116,7 @@ namespace Marionet.App
             Stopped?.Invoke(null, new EventArgs());
         }
 
-        public static void Stop()
+        public static async Task Stop()
         {
             if (appThread == null)
             {
@@ -133,6 +137,7 @@ namespace Marionet.App
             roundEndSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             appThread = new Thread(() =>
             {
+                UpdateHostRunning(true);
                 try
                 {
                     CreateHostBuilder(args).Build().Run();
@@ -184,6 +189,13 @@ namespace Marionet.App
 
             return true;
         }
+
+        private static void UpdateHostRunning(bool running)
+        {
+            HostRunning = running;
+            HostRunningUpdated?.Invoke(null, new EventArgs());
+        }
+
         private void OnRunningAllowedUpdated(object? sender, EventArgs e)
         {
             if (!RunningAllowed)
@@ -221,7 +233,7 @@ namespace Marionet.App
         [System.Diagnostics.Conditional("DEBUG")]
         private static void WriteDebugLine(string message)
         {
-            Console.WriteLine(message);
+            Debug.WriteLine(message);
         }
 
         /// <summary>

@@ -10,6 +10,7 @@ namespace Marionet.App.Configuration
     public class Config
     {
         public const int ServerPort = 23549;
+        public const int SettingsWatcherTimeout = 100;
 
         public static readonly string ConfigurationDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Marionet");
         public static readonly string ConfigurationFile = Path.Combine(ConfigurationDirectory, "config.json");
@@ -42,12 +43,13 @@ namespace Marionet.App.Configuration
                 if (reloadEventCancellation != null)
                 {
                     reloadEventCancellation.Cancel();
+                    reloadEventCancellation.Dispose();
                 }
 
                 reloadEventCancellation = new CancellationTokenSource();
                 try
                 {
-                    await Task.Delay(200, reloadEventCancellation.Token);
+                    await Task.Delay(SettingsWatcherTimeout, reloadEventCancellation.Token);
                     await Load();
                     SettingsReloaded?.Invoke(null, new EventArgs());
                 }

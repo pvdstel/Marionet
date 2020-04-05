@@ -11,6 +11,7 @@ namespace Marionet.UI.ViewModels
     {
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
+        private bool isHostRunning;
         private bool preventClose = true;
 
         public MainWindowViewModel()
@@ -24,9 +25,11 @@ namespace Marionet.UI.ViewModels
             Supervisor.Started += OnSupervisorStarted;
             Supervisor.Stopped += OnSupervisorStopped;
             Supervisor.RunningAllowedUpdated += OnSupervisorRunningAllowedUpdated;
+            Supervisor.HostRunningUpdated += OnHostRunningUpdated;
 
             IsSupervisorRunning = Supervisor.Running;
             IsRunningAllowed = Supervisor.RunningAllowed;
+            IsHostRunning = Supervisor.HostRunning;
         }
 
         public event EventHandler? ExitTriggered;
@@ -46,6 +49,15 @@ namespace Marionet.UI.ViewModels
             private set
             {
                 this.RaiseAndSetIfChanged(ref isRunningAllowed, value);
+            }
+        }
+
+        public bool IsHostRunning
+        {
+            get => isHostRunning;
+            private set
+            {
+                this.RaiseAndSetIfChanged(ref isHostRunning, value);
             }
         }
 
@@ -120,6 +132,11 @@ namespace Marionet.UI.ViewModels
         private void OnSupervisorRunningAllowedUpdated(object? sender, EventArgs e)
         {
             IsRunningAllowed = Supervisor.RunningAllowed;
+        }
+
+        private void OnHostRunningUpdated(object? sender, EventArgs e)
+        {
+            IsHostRunning = Supervisor.HostRunning;
         }
 
         #region IDisposable Support

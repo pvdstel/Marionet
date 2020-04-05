@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Marionet.UI
 {
-    class Program
+    public static class Program
     {
         private const string ShowSignalName = "7e29830a-272c-4354-85e7-1a85a0e6a48c";
         private const string FirstMutexName = "d0ab88ed-49ac-45f1-b695-1ba3c6d23b1c";

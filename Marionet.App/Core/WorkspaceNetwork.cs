@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Marionet.App.Core
@@ -13,6 +14,8 @@ namespace Marionet.App.Core
     {
         private readonly IHubContext<NetHub, INetClient> netHub;
         private readonly ClientIdentifierService clientIdentifierService;
+        private static CancellationTokenSource? onDesktopsChangedDebounce;
+        private const int DesktopsChangedDebounceTimeout = 2500;
 
         public WorkspaceNetwork(
             IHubContext<NetHub, INetClient> netHub,
@@ -74,9 +77,21 @@ namespace Marionet.App.Core
         internal void PressKeyboardButton(string desktopName, int keyCode) => PressKeyboardButtonReceived?.Invoke(this, new KeyboardButtonActionReceivedEventArgs(desktopName, keyCode));
         internal void ReleaseKeyboardButton(string desktopName, int keyCode) => ReleaseKeyboardButtonReceived?.Invoke(this, new KeyboardButtonActionReceivedEventArgs(desktopName, keyCode));
 
-        private void OnDesktopsChanged(object? sender, EventArgs e)
+        private async void OnDesktopsChanged(object? sender, EventArgs e)
         {
-            DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(Configuration.Config.Instance.Desktops));
+            if (onDesktopsChangedDebounce != null)
+            {
+                onDesktopsChangedDebounce.Cancel();
+                onDesktopsChangedDebounce.Dispose();
+            }
+
+            onDesktopsChangedDebounce = new CancellationTokenSource();
+            try
+            {
+                await Task.Delay(DesktopsChangedDebounceTimeout, onDesktopsChangedDebounce.Token);
+                DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(Configuration.Config.Instance.Desktops));
+            }
+            catch (TaskCanceledException) { }
         }
 
         #region IDisposable Support
@@ -89,6 +104,9 @@ namespace Marionet.App.Core
                 if (disposing)
                 {
                     Configuration.Desktop.DesktopsChanged -= OnDesktopsChanged;
+                    onDesktopsChangedDebounce?.Cancel();
+                    onDesktopsChangedDebounce?.Dispose();
+                    onDesktopsChangedDebounce = null;
                 }
 
                 disposedValue = true;
