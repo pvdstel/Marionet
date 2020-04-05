@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace Marionet.App.Configuration
 {
-    internal class Config
+    public class Config
     {
         public const int ServerPort = 23549;
 
-        internal static string ConfigurationDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Marionet");
-        internal static string ConfigurationFile = Path.Combine(ConfigurationDirectory, "config.json");
+        public static readonly string ConfigurationDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Marionet");
+        public static readonly string ConfigurationFile = Path.Combine(ConfigurationDirectory, "config.json");
 
         private static readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
         private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -84,8 +84,11 @@ namespace Marionet.App.Configuration
 
         public string Self { get; set; } = Environment.MachineName;
 
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Used for serialization.")]
         public List<string> Desktops { get; set; } = new List<string>() { Environment.MachineName };
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Used for serialization.")]
         public Dictionary<string, string> DesktopAddresses { get; set; } = new Dictionary<string, string>()
         {
             { Environment.MachineName, Environment.MachineName }

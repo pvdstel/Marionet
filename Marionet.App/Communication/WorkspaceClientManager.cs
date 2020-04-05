@@ -45,11 +45,7 @@ namespace Marionet.App.Communication
                 AddMachineClient(desktop);
             }
             mutationLock.Release();
-            Configuration.Desktop.DesktopsChanged += async (s, e) =>
-            {
-                await netHub.Clients.All.DesktopsUpdated(Configuration.Config.Instance.Desktops);
-                UpdateMachineClients();
-            };
+            Configuration.Desktop.DesktopsChanged += OnDesktopsChanged;
         }
 
         public NetClient GetNetClient(string desktopName)
@@ -112,6 +108,12 @@ namespace Marionet.App.Communication
             _ = client.Connect(hostApplicationLifetime.ApplicationStopping);
         }
 
+        private async void OnDesktopsChanged(object? sender, EventArgs e)
+        {
+            await netHub.Clients.All.DesktopsUpdated(Configuration.Config.Instance.Desktops);
+            UpdateMachineClients();
+        }
+
         #region IDisposable Support
         private bool disposedValue = false;
 
@@ -122,6 +124,7 @@ namespace Marionet.App.Communication
                 if (disposing)
                 {
                     mutationLock.Dispose();
+                    Configuration.Desktop.DesktopsChanged -= OnDesktopsChanged;
                 }
 
                 disposedValue = true;

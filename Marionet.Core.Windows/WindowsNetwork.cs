@@ -21,6 +21,8 @@ namespace Marionet.Core.Windows
                     p.StartInfo.Arguments = "wlan show interfaces";
                     p.StartInfo.RedirectStandardOutput = true;
                     p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    p.StartInfo.CreateNoWindow = true;
                     p.Start();
                     p.WaitForExit();
 

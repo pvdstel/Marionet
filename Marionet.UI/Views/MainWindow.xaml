@@ -1,0 +1,94 @@
+﻿<Window
+    x:Class="Marionet.UI.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Marionet.UI.ViewModels;assembly=Marionet.UI"
+    Title="Marionet.UI"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    Icon="/Assets/avalonia-logo.ico"
+    IsVisible="False"
+    SizeToContent="WidthAndHeight"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="10">
+            <WrapPanel IsVisible="{Binding IsSupervisorRunning}">
+                <Ellipse
+                    Width="16"
+                    Height="16"
+                    Margin="0,0,10,0"
+                    Fill="#18C45A" />
+                <TextBlock FontSize="24" Text="The Marionet service supervisor is up and running." />
+            </WrapPanel>
+            <WrapPanel IsVisible="{Binding !IsSupervisorRunning}">
+                <Ellipse
+                    Width="16"
+                    Height="16"
+                    Margin="0,0,10,0"
+                    Fill="#C41818" />
+                <TextBlock FontSize="24" Text="The Marionet service supervisor is not active." />
+            </WrapPanel>
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsRunningAllowed}">
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Margin="3,0,13,0"
+                    Fill="#00B7FF" />
+                <TextBlock Text="The Marionet service is allowed to run." />
+            </WrapPanel>
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsRunningAllowed}">
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Margin="3,0,13,0"
+                    Fill="#FF9100" />
+                <TextBlock Text="The Marionet service supervisor is not allowed to run by the run conditions." />
+            </WrapPanel>
+        </StackPanel>
+
+        <WrapPanel Grid.Row="1" Margin="10">
+            <Button Command="{Binding StartSupervisorCommand}" Content="Start Marionet supervisor" />
+            <Button
+                Margin="10,0,0,0"
+                Command="{Binding StopSupervisorCommand}"
+                Content="Stop Marionet supervisor" />
+            <Button
+                Margin="10,0,0,0"
+                Command="{Binding OpenSettingsFileCommand}"
+                Content="Open settings file" />
+            <Button
+                Margin="10,0,0,0"
+                Command="{Binding OpenSettingsDirectoryCommand}"
+                Content="Open settings directory" />
+        </WrapPanel>
+        <Rectangle
+            Grid.Row="2"
+            Height="1"
+            Fill="{DynamicResource ThemeBorderLowBrush}" />
+
+        <Rectangle
+            Grid.Row="4"
+            Height="1"
+            Fill="{DynamicResource ThemeBorderLowBrush}" />
+        <ContentControl Grid.Row="5" Margin="10">
+            <TextBlock Text="The Marionet service will continue to run once you close this window." />
+        </ContentControl>
+        <WrapPanel Grid.Row="6" Margin="10,0,10,10">
+            <Button Command="{Binding ExitApplicationCommand}" Content="Exit application" />
+        </WrapPanel>
+    </Grid>
+
+</Window>

@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

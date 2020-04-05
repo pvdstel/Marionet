@@ -12,11 +12,12 @@ namespace Marionet.App
 {
     public class Supervisor : IDisposable
     {
-        private static bool runCalled;
         private static Thread? appThread;
         private static TaskCompletionSource<TerminationReason>? stopReasonSource;
+        private static TaskCompletionSource<bool>? roundEndSource;
         private static readonly INetwork network = PlatformSelector.GetNetwork();
         private static readonly SemaphoreSlim checkSemaphore = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim runningSemaphore = new SemaphoreSlim(1, 1);
 
         private readonly IHostApplicationLifetime applicationLifetime;
 
@@ -25,37 +26,56 @@ namespace Marionet.App
             this.applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
         }
 
-        private static event EventHandler<RunningAllowedChangedEventArgs>? RunningAllowedUpdated;
+        public static bool Running { get; private set; }
+        public static bool RunningAllowed { get; private set; }
 
-        public static async Task Run(string[] args)
+        public static event EventHandler? Started;
+        public static event EventHandler? Stopped;
+        public static event EventHandler? RunningAllowedUpdated;
+
+        private static event EventHandler? ShutdownRequested;
+
+        public static async Task Initialize()
         {
-            if (runCalled)
-            {
-                throw new InvalidOperationException("The " + nameof(Run) + " method has already been called.");
-            }
-            runCalled = true;
-
+            await Config.Load();
             StartEnvironmentMonitor();
+            await UpdateRunningAllowed();
+        }
+
+        public static Task StartAsync() => StartAsync(Array.Empty<string>());
+
+        public static async Task StartAsync(string[] args)
+        {
+            await runningSemaphore.WaitAsync();
+            if (Running)
+            {
+                return;
+            }
+            Running = true;
+            runningSemaphore.Release();
+            Started?.Invoke(null, new EventArgs());
 
             bool continueRunning = true;
             while (continueRunning)
             {
-                if (await IsRunningAllowed())
+                await UpdateRunningAllowed();
+                if (RunningAllowed)
                 {
                     WriteDebugLine("Running is allowed by the run conditions.");
                     WriteDebugLine("Creating new host thread...");
                     RunApp(args);
                     WriteDebugLine("Host thread created.");
 
-                    if (stopReasonSource == null)
+                    if (stopReasonSource == null || roundEndSource == null)
                     {
                         throw new InvalidOperationException("The stop reason task source is null. This state should be impossible.");
                     }
 
                     WriteDebugLine("Waiting for host termination...");
                     var stopReason = await stopReasonSource.Task;
+                    var mayContinue = await roundEndSource.Task;
                     WriteDebugLine($"Host termination reason was: {stopReason}");
-                    if (stopReason == TerminationReason.Self)
+                    if (!mayContinue || stopReason == TerminationReason.Self || stopReason == TerminationReason.ShutdownRequested)
                     {
                         continueRunning = false;
                     }
@@ -63,15 +83,15 @@ namespace Marionet.App
                 else
                 {
                     WriteDebugLine("Running is not allowed by the run conditions.");
-                    TaskCompletionSource<bool> wait = new TaskCompletionSource<bool>();
-                    EventHandler<RunningAllowedChangedEventArgs> handler = default!;
+                    roundEndSource = new TaskCompletionSource<bool>();
+                    EventHandler handler = default!;
                     handler = (sender, e) =>
                     {
-                        if (e.RunningAllowed)
+                        if (RunningAllowed)
                         {
                             WriteDebugLine("Running is now allowed.");
                             RunningAllowedUpdated -= handler;
-                            wait.TrySetResult(true);
+                            roundEndSource.TrySetResult(true);
                         }
                         else
                         {
@@ -79,43 +99,60 @@ namespace Marionet.App
                         }
                     };
                     RunningAllowedUpdated += handler;
-                    await wait.Task;
+                    continueRunning = await roundEndSource.Task;
                 }
             }
+
             WriteDebugLine("Exiting...");
+
+            await runningSemaphore.WaitAsync();
+            Running = false;
+            runningSemaphore.Release();
+
+            Stopped?.Invoke(null, new EventArgs());
+        }
+
+        public static void Stop()
+        {
+            if (appThread == null)
+            {
+                roundEndSource?.TrySetResult(false);
+            }
+            ShutdownRequested?.Invoke(null, new EventArgs());
         }
 
         public void StartMonitoring()
         {
             RunningAllowedUpdated += OnRunningAllowedUpdated;
-        }
-
-        [System.Diagnostics.Conditional("DEBUG")]
-        private static void WriteDebugLine(string message)
-        {
-            Console.WriteLine(message);
+            ShutdownRequested += OnShutdownRequested;
         }
 
         private static void RunApp(string[] args)
         {
             stopReasonSource = new TaskCompletionSource<TerminationReason>(TaskCreationOptions.RunContinuationsAsynchronously);
+            roundEndSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             appThread = new Thread(() =>
             {
-                CreateHostBuilder(args).Build().Run();
+                try
+                {
+                    CreateHostBuilder(args).Build().Run();
+                }
+                catch (OperationCanceledException) { }
                 stopReasonSource?.TrySetResult(TerminationReason.Self);
                 appThread = null;
                 WriteDebugLine("Host application thread finished.");
+                roundEndSource.TrySetResult(true);
             });
             appThread.Start();
         }
 
         private static void StartEnvironmentMonitor()
         {
-            NetworkChange.NetworkAddressChanged += (sender, e) =>
+            Config.SettingsReloaded += (sender, e) =>
             {
                 _ = UpdateRunningAllowed();
             };
-            Config.SettingsReloaded += (sender, e) =>
+            NetworkChange.NetworkAddressChanged += (sender, e) =>
             {
                 _ = UpdateRunningAllowed();
             };
@@ -125,12 +162,18 @@ namespace Marionet.App
         {
             await checkSemaphore.WaitAsync();
             var runningAllowed = await IsRunningAllowed();
-            RunningAllowedUpdated?.Invoke(null, new RunningAllowedChangedEventArgs(runningAllowed));
+            RunningAllowed = runningAllowed;
+            RunningAllowedUpdated?.Invoke(null, new EventArgs());
             checkSemaphore.Release();
         }
 
         private static async Task<bool> IsRunningAllowed()
         {
+            if (Config.Instance.RunConditions.BlockAll)
+            {
+                return false;
+            }
+
             var wirelessNetworks = await network.GetWirelessNetworkInterfaces();
             var connectedSsids = wirelessNetworks.Where(n => n.Connected).Select(n => n.SSID).ToList();
             var allowedSsids = Config.Instance.RunConditions.AllowedSsids;
@@ -140,6 +183,22 @@ namespace Marionet.App
             }
 
             return true;
+        }
+        private void OnRunningAllowedUpdated(object? sender, EventArgs e)
+        {
+            if (!RunningAllowed)
+            {
+                WriteDebugLine("Running no longer allowed -- terminating host application.");
+                stopReasonSource?.TrySetResult(TerminationReason.Disallowed);
+                applicationLifetime.StopApplication();
+            }
+        }
+
+        private void OnShutdownRequested(object? sender, EventArgs e)
+        {
+            WriteDebugLine("Shutdown request received -- terminating host application.");
+            stopReasonSource?.TrySetResult(TerminationReason.ShutdownRequested);
+            applicationLifetime.StopApplication();
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -159,14 +218,10 @@ namespace Marionet.App
                      webBuilder.UseUrls($"https://0.0.0.0:{Config.ServerPort}");
                  });
 
-        private void OnRunningAllowedUpdated(object? sender, RunningAllowedChangedEventArgs e)
+        [System.Diagnostics.Conditional("DEBUG")]
+        private static void WriteDebugLine(string message)
         {
-            if (!e.RunningAllowed)
-            {
-                WriteDebugLine("Running no longer allowed -- terminating host application.");
-                stopReasonSource?.TrySetResult(TerminationReason.Disallowed);
-                applicationLifetime.StopApplication();
-            }
+            Console.WriteLine(message);
         }
 
         /// <summary>
@@ -182,16 +237,10 @@ namespace Marionet.App
             /// Execution of the application was no longer allowed and therefore requested to stop.
             /// </summary>
             Disallowed,
-        }
-
-        private class RunningAllowedChangedEventArgs : EventArgs
-        {
-            public RunningAllowedChangedEventArgs(bool runningAllowed)
-            {
-                RunningAllowed = runningAllowed;
-            }
-
-            public bool RunningAllowed { get; }
+            /// <summary>
+            /// An external shutdown request was sent to the <see cref="Supervisor"/>.
+            /// </summary>
+            ShutdownRequested,
         }
 
         #region IDisposable Support
@@ -204,6 +253,7 @@ namespace Marionet.App
                 if (disposing)
                 {
                     RunningAllowedUpdated -= OnRunningAllowedUpdated;
+                    ShutdownRequested -= OnShutdownRequested;
                 }
 
                 disposedValue = true;

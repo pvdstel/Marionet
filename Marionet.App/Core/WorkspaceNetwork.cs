@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Marionet.App.Core
 {
-    public class WorkspaceNetwork : IWorkspaceNetwork
+    public class WorkspaceNetwork : IWorkspaceNetwork, IDisposable
     {
         private readonly IHubContext<NetHub, INetClient> netHub;
         private readonly ClientIdentifierService clientIdentifierService;
@@ -21,7 +21,7 @@ namespace Marionet.App.Core
             this.netHub = netHub;
             this.clientIdentifierService = clientIdentifierService;
 
-            Configuration.Desktop.DesktopsChanged += DesktopDesktopsChanged;
+            Configuration.Desktop.DesktopsChanged += OnDesktopsChanged;
         }
 
         public event EventHandler<ClientConnectionChangedEventArgs>? ClientConnected;
@@ -74,9 +74,32 @@ namespace Marionet.App.Core
         internal void PressKeyboardButton(string desktopName, int keyCode) => PressKeyboardButtonReceived?.Invoke(this, new KeyboardButtonActionReceivedEventArgs(desktopName, keyCode));
         internal void ReleaseKeyboardButton(string desktopName, int keyCode) => ReleaseKeyboardButtonReceived?.Invoke(this, new KeyboardButtonActionReceivedEventArgs(desktopName, keyCode));
 
-        private void DesktopDesktopsChanged(object? sender, EventArgs e)
+        private void OnDesktopsChanged(object? sender, EventArgs e)
         {
             DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(Configuration.Config.Instance.Desktops));
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Configuration.Desktop.DesktopsChanged -= OnDesktopsChanged;
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

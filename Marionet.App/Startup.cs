@@ -17,6 +17,7 @@ namespace Marionet.App
     public class Startup
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Called by the ASP.NET Core runtime.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "Called by the ASP.NET Core runtime.")]
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAuthentication(CertificateMatchAuthenticationDefaults.AuthenticationScheme).AddCertificateMatch(options =>

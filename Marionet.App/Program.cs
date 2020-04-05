@@ -4,10 +4,10 @@ namespace Marionet.App
 {
     public static class Program
     {
-        public static Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            Configuration.Config.Load().Wait();
-            return Supervisor.Run(args);
+            await Supervisor.Initialize();
+            await Supervisor.StartAsync(args);
         }
 
     }
