@@ -92,7 +92,14 @@
         <Rectangle
             Grid.Row="2"
             Height="1"
-            Fill="{DynamicResource ThemeBorderLowBrush}" />
+            Fill="{DynamicResource ThemeBorderLowBrush}"
+            IsVisible="{Binding !IsWaiting, Mode=OneWay}" />
+        <ProgressBar
+            Grid.Row="2"
+            Height="3"
+            MinHeight="3"
+            IsIndeterminate="True"
+            IsVisible="{Binding IsWaiting, Mode=OneWay}" />
 
         <Grid Grid.Row="3">
             <Grid.RowDefinitions>

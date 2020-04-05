@@ -16,24 +16,25 @@ namespace Marionet.UI.ViewModels
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
         private bool isHostRunning;
+        private bool isWaiting;
         private List<string> knownHosts = default!;
         private string? selectedHost = default;
         private bool preventClose = true;
 
         public MainWindowViewModel()
         {
-            StartSupervisorCommand = ReactiveCommand.Create(StartSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, (v, c) => !v && c));
-            StopSupervisorCommand = ReactiveCommand.Create(StopSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, (v, c) => v && c));
-            MoveSelectedHostUpCommand = ReactiveCommand.Create<string>(MoveSelectedHostUp, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, (k, s) => !string.IsNullOrEmpty(s) && k.IndexOf(s) > 0));
-            MoveSelectedHostDownCommand = ReactiveCommand.Create<string>(MoveSelectedHostDown, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, (k, s) =>
+            StartSupervisorCommand = ReactiveCommand.Create(StartSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && !v && c));
+            StopSupervisorCommand = ReactiveCommand.Create(StopSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && v && c));
+            MoveSelectedHostUpCommand = ReactiveCommand.Create<string>(MoveSelectedHostUp, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, x => x.IsWaiting, (k, s, w) => !w && !string.IsNullOrEmpty(s) && k.IndexOf(s) > 0));
+            MoveSelectedHostDownCommand = ReactiveCommand.Create<string>(MoveSelectedHostDown, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, x => x.IsWaiting, (k, s, w) =>
             {
-                if (string.IsNullOrEmpty(s)) { return false; }
+                if (!w && string.IsNullOrEmpty(s)) { return false; }
                 int index = k.IndexOf(s);
                 return index >= 0 && index < k.Count - 1;
             }));
             OpenSettingsFileCommand = ReactiveCommand.Create(OpenSettingsFile);
             OpenSettingsDirectoryCommand = ReactiveCommand.Create(OpenSettingsDirectory);
-            ExitApplicationCommand = ReactiveCommand.Create(ExitApplication, this.WhenAnyValue(x => x.PreventClose));
+            ExitApplicationCommand = ReactiveCommand.Create(ExitApplication, this.WhenAnyValue(x => x.PreventClose, x => x.IsWaiting, (c, w) => !w && c));
 
             Supervisor.Started += OnSupervisorStarted;
             Supervisor.Stopped += OnSupervisorStopped;
@@ -73,6 +74,15 @@ namespace Marionet.UI.ViewModels
             private set
             {
                 this.RaiseAndSetIfChanged(ref isHostRunning, value);
+            }
+        }
+
+        public bool IsWaiting
+        {
+            get => isWaiting;
+            private set
+            {
+                this.RaiseAndSetIfChanged(ref isWaiting, value);
             }
         }
 
@@ -119,16 +129,19 @@ namespace Marionet.UI.ViewModels
 
         private void StartSupervisor()
         {
+            IsWaiting = true;
             _ = Supervisor.StartAsync();
         }
 
-        private static void StopSupervisor()
+        private void StopSupervisor()
         {
+            IsWaiting = true;
             _ = Supervisor.Stop();
         }
 
         private void MoveSelectedHostUp(string which)
         {
+            IsWaiting = false;
             List<string> next = Config.Instance.Desktops.ToList();
             int index = next.IndexOf(which);
             if (index > 0)
@@ -142,6 +155,7 @@ namespace Marionet.UI.ViewModels
 
         private void MoveSelectedHostDown(string which)
         {
+            IsWaiting = false;
             List<string> next = Config.Instance.Desktops.ToList();
             int index = next.IndexOf(which);
             if (index >= 0 && index < next.Count - 1)
@@ -171,6 +185,7 @@ namespace Marionet.UI.ViewModels
 
         private async void ExitApplication()
         {
+            IsWaiting = true;
             bool wasRunning = IsSupervisorRunning;
             StopSupervisor();
             PreventClose = false;
@@ -187,6 +202,7 @@ namespace Marionet.UI.ViewModels
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 IsSupervisorRunning = true;
+                IsWaiting = false;
             });
         }
 
@@ -195,6 +211,7 @@ namespace Marionet.UI.ViewModels
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 IsSupervisorRunning = false;
+                IsWaiting = false;
             });
         }
 
@@ -219,6 +236,7 @@ namespace Marionet.UI.ViewModels
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 KnownHosts = Config.Instance.Desktops.ToList();
+                IsWaiting = false;
             });
         }
 

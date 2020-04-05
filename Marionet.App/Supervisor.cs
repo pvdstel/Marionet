@@ -118,11 +118,15 @@ namespace Marionet.App
 
         public static async Task Stop()
         {
+            await Task.Yield();
             if (appThread == null)
             {
                 roundEndSource?.TrySetResult(false);
             }
-            ShutdownRequested?.Invoke(null, new EventArgs());
+            await Task.Run(() =>
+            {
+                ShutdownRequested?.Invoke(null, new EventArgs());
+            });
         }
 
         public void StartMonitoring()
