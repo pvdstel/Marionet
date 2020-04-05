@@ -15,15 +15,14 @@
       <SubType>Designer</SubType>
     </AvaloniaResource>
     <AvaloniaResource Include="Assets\**" />
-  </ItemGroup>
-  <ItemGroup>
     <AvaloniaResource Remove="UIApp.xaml" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\logo.ico" />
     <None Remove="UIApp.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\art\logo.ico" Link="logo.ico" />
+    <Content Include="Assets\logo.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.9.7" />
