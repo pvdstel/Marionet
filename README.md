@@ -15,10 +15,16 @@ It is possible to specify the location in the network using the `desktopAddresse
 
 To ensure that the application only runs in a trusted network, simply specify the run conditions in the `runConditions` field. Here you may specify the known SSIDs on which the application may run, or choose to simply block the application from running.
 
-## Why?
+## FAQ
+
+### Why won't it work on some windows?
+
+Windows does not allow sending input to privileged user interfaces, such as Task Manager, or the login UI. You could run this application as administrator, so it can send input to privileged userspace applications. Sending input to the login screen is not allowed for userspace applications.
+
+### Why?
 
 Just to see if I could.
 
-## Name origins
+### Where does the name come from?
 
 The name is based on the Dutch word for "marionette".
