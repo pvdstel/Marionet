@@ -89,6 +89,7 @@ namespace Marionet.App.SignalR
                 try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    cancellationToken.Register(CancelConnection);
                     logger.LogInformation($"Connecting to {uri}...");
                     await connection.StartAsync(cancellationToken);
                     logger.LogInformation($"Connected to {uri}");
@@ -126,6 +127,14 @@ namespace Marionet.App.SignalR
             }
 
             return result;
+        }
+
+        private async void CancelConnection()
+        {
+            if (connection.State == HubConnectionState.Connected)
+            {
+                await Disconnect();
+            }
         }
 
 
