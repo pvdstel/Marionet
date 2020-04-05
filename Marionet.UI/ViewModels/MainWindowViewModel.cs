@@ -28,7 +28,7 @@ namespace Marionet.UI.ViewModels
             MoveSelectedHostUpCommand = ReactiveCommand.Create<string>(MoveSelectedHostUp, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, x => x.IsWaiting, (k, s, w) => !w && !string.IsNullOrEmpty(s) && k.IndexOf(s) > 0));
             MoveSelectedHostDownCommand = ReactiveCommand.Create<string>(MoveSelectedHostDown, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, x => x.IsWaiting, (k, s, w) =>
             {
-                if (!w && string.IsNullOrEmpty(s)) { return false; }
+                if (!w || string.IsNullOrEmpty(s)) { return false; }
                 int index = k.IndexOf(s);
                 return index >= 0 && index < k.Count - 1;
             }));
