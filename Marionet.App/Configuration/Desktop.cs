@@ -8,9 +8,18 @@ namespace Marionet.App.Configuration
 {
     internal static class Desktop
     {
+        private static List<string>? lastDesktops = new List<string>();
+
         static Desktop()
         {
-            Config.SettingsReloaded += (s, e) => DesktopsChanged?.Invoke(null, new EventArgs());
+            Config.SettingsReloaded += (s, e) =>
+            {
+                if (!Config.Instance.Desktops.SequenceEqual(lastDesktops))
+                {
+                    lastDesktops = Config.Instance.Desktops.ToList();
+                    DesktopsChanged?.Invoke(null, new EventArgs());
+                }
+            };
         }
 
         public static event EventHandler? DesktopsChanged;

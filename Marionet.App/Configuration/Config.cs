@@ -18,7 +18,6 @@ namespace Marionet.App.Configuration
         private static readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
         private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         private static readonly FileSystemWatcher settingsWatcher;
-        private static DateTime lastSave = DateTime.Now;
         private static CancellationTokenSource? reloadEventCancellation;
 
         static Config()
@@ -38,7 +37,7 @@ namespace Marionet.App.Configuration
 
         private static async void SettingsFileChanged(object sender, FileSystemEventArgs e)
         {
-            if (e.FullPath == ConfigurationFile && (DateTime.Now - lastSave).TotalMilliseconds > 1000)
+            if (e.FullPath == ConfigurationFile)
             {
                 if (reloadEventCancellation != null)
                 {
@@ -61,7 +60,6 @@ namespace Marionet.App.Configuration
         {
             await storageLock.WaitAsync();
             await File.WriteAllTextAsync(ConfigurationFile, JsonSerializer.Serialize(Instance, jsonSerializerOptions));
-            lastSave = DateTime.Now;
             storageLock.Release();
         }
 
