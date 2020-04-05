@@ -17,6 +17,7 @@ namespace Marionet.UI.ViewModels
         private bool isRunningAllowed;
         private bool isHostRunning;
         private bool isWaiting;
+        private string selfName = default!;
         private List<string> knownHosts = default!;
         private string? selectedHost = default;
         private bool preventClose = true;
@@ -45,6 +46,7 @@ namespace Marionet.UI.ViewModels
             IsSupervisorRunning = Supervisor.Running;
             IsRunningAllowed = Supervisor.RunningAllowed;
             IsHostRunning = Supervisor.HostRunning;
+            SelfName = Config.Instance.Self;
             KnownHosts = Config.Instance.Desktops.ToList();
         }
 
@@ -74,6 +76,14 @@ namespace Marionet.UI.ViewModels
             private set
             {
                 this.RaiseAndSetIfChanged(ref isHostRunning, value);
+            }
+        }
+
+        public string SelfName
+        {
+            get => selfName;
+            private set {
+                this.RaiseAndSetIfChanged(ref selfName, value);
             }
         }
 
@@ -235,6 +245,7 @@ namespace Marionet.UI.ViewModels
         {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
+                SelfName = Config.Instance.Self;
                 KnownHosts = Config.Instance.Desktops.ToList();
                 IsWaiting = false;
             });

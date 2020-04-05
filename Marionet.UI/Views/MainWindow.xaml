@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:Marionet.UI.ViewModels;assembly=Marionet.UI"
-    Title="Marionet.UI"
+    Title="{Binding SelfName, StringFormat=Marionet @ {0}}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     Icon="/Assets/logo.ico"
