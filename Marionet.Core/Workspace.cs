@@ -230,6 +230,7 @@ namespace Marionet.Core
                     workspaceNetwork.PressKeyboardButtonReceived -= OnPressKeyboardButtonReceived;
                     workspaceNetwork.ReleaseKeyboardButtonReceived -= OnReleaseKeyboardButtonReceived;
 
+                    inputManager.SystemEvent -= OnSystemEvent;
                     inputManager.DisplayAdapter.DisplaysChanged -= OnDisplaysChanged;
                     inputManager.MouseListener.MouseMoved -= OnMouseMoved;
                     inputManager.MouseListener.MouseButtonPressed -= OnMouseButtonPressed;
