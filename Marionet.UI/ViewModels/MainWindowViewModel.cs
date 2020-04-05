@@ -1,7 +1,10 @@
 ﻿using Marionet.App;
+using Marionet.App.Configuration;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 
@@ -12,6 +15,7 @@ namespace Marionet.UI.ViewModels
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
         private bool isHostRunning;
+        private List<string> knownHosts = default!;
         private bool preventClose = true;
 
         public MainWindowViewModel()
@@ -26,10 +30,12 @@ namespace Marionet.UI.ViewModels
             Supervisor.Stopped += OnSupervisorStopped;
             Supervisor.RunningAllowedUpdated += OnSupervisorRunningAllowedUpdated;
             Supervisor.HostRunningUpdated += OnHostRunningUpdated;
+            Config.SettingsReloaded += OnSettingsReloaded;
 
             IsSupervisorRunning = Supervisor.Running;
             IsRunningAllowed = Supervisor.RunningAllowed;
             IsHostRunning = Supervisor.HostRunning;
+            SetKnownHostsList();
         }
 
         public event EventHandler? ExitTriggered;
@@ -58,6 +64,15 @@ namespace Marionet.UI.ViewModels
             private set
             {
                 this.RaiseAndSetIfChanged(ref isHostRunning, value);
+            }
+        }
+
+        public List<string> KnownHosts
+        {
+            get => knownHosts;
+            private set
+            {
+                this.RaiseAndSetIfChanged(ref knownHosts, value);
             }
         }
 
@@ -119,6 +134,21 @@ namespace Marionet.UI.ViewModels
             Program.ShutdownApplication();
         }
 
+        private void SetKnownHostsList()
+        {
+            KnownHosts = Config.Instance.Desktops.Select(d =>
+            {
+                if (d != Config.Instance.Self && Config.Instance.DesktopAddresses.TryGetValue(d, out string? address))
+                {
+                    return $"{d} @ {address}";
+                }
+                else
+                {
+                    return d;
+                }
+            }).ToList();
+        }
+
         private void OnSupervisorStarted(object? sender, EventArgs e)
         {
             IsSupervisorRunning = true;
@@ -137,6 +167,11 @@ namespace Marionet.UI.ViewModels
         private void OnHostRunningUpdated(object? sender, EventArgs e)
         {
             IsHostRunning = Supervisor.HostRunning;
+        }
+
+        private void OnSettingsReloaded(object? sender, EventArgs e)
+        {
+            SetKnownHostsList();
         }
 
         #region IDisposable Support

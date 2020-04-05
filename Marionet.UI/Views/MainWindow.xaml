@@ -94,6 +94,18 @@
             Height="1"
             Fill="{DynamicResource ThemeBorderLowBrush}" />
 
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Margin="10,10,10,0" Text="Known desktops" />
+            <ListBox
+                Grid.Row="1"
+                Margin="10"
+                Items="{Binding KnownHosts}" />
+        </Grid>
+
         <Rectangle
             Grid.Row="4"
             Height="1"
