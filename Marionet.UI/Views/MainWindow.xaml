@@ -32,7 +32,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="10">
-            <WrapPanel IsVisible="{Binding IsSupervisorRunning}">
+            <WrapPanel IsVisible="{Binding IsSupervisorRunning, Mode=OneWay}">
                 <Ellipse
                     Width="16"
                     Height="16"
@@ -40,7 +40,7 @@
                     Fill="{DynamicResource RunningBrush}" />
                 <TextBlock FontSize="24" Text="The Marionet service supervisor is up and running." />
             </WrapPanel>
-            <WrapPanel IsVisible="{Binding !IsSupervisorRunning}">
+            <WrapPanel IsVisible="{Binding !IsSupervisorRunning, Mode=OneWay}">
                 <Ellipse
                     Width="16"
                     Height="16"
@@ -48,7 +48,7 @@
                     Fill="{DynamicResource OffBrush}" />
                 <TextBlock FontSize="24" Text="The Marionet service supervisor is not active." />
             </WrapPanel>
-            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsRunningAllowed}">
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsRunningAllowed, Mode=OneWay}">
                 <Ellipse
                     Width="10"
                     Height="10"
@@ -56,7 +56,7 @@
                     Fill="{DynamicResource EnabledBrush}" />
                 <TextBlock Text="The Marionet service is allowed to run." />
             </WrapPanel>
-            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsRunningAllowed}">
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsRunningAllowed, Mode=OneWay}">
                 <Ellipse
                     Width="10"
                     Height="10"
@@ -64,7 +64,7 @@
                     Fill="{DynamicResource DisabledBrush}" />
                 <TextBlock Text="The Marionet service supervisor is not allowed to run by the run conditions." />
             </WrapPanel>
-            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsHostRunning}">
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsHostRunning, Mode=OneWay}">
                 <Ellipse
                     Width="10"
                     Height="10"
@@ -72,7 +72,7 @@
                     Fill="{DynamicResource RunningBrush}" />
                 <TextBlock Text="The Marionet host is active." />
             </WrapPanel>
-            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsHostRunning}">
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsHostRunning, Mode=OneWay}">
                 <Ellipse
                     Width="10"
                     Height="10"
@@ -83,10 +83,10 @@
         </StackPanel>
 
         <WrapPanel Grid.Row="1" Margin="10">
-            <Button Command="{Binding StartSupervisorCommand}" Content="Start Marionet supervisor" />
+            <Button Command="{Binding StartSupervisorCommand, Mode=OneTime}" Content="Start Marionet supervisor" />
             <Button
                 Margin="10,0,0,0"
-                Command="{Binding StopSupervisorCommand}"
+                Command="{Binding StopSupervisorCommand, Mode=OneTime}"
                 Content="Stop Marionet supervisor" />
         </WrapPanel>
         <Rectangle
@@ -99,11 +99,38 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition />
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock Margin="10,10,10,0" Text="Known desktops" />
             <ListBox
                 Grid.Row="1"
                 Margin="10"
-                Items="{Binding KnownHosts}" />
+                Items="{Binding KnownHosts, Mode=OneWay}"
+                SelectedItem="{Binding SelectedHost}" />
+            <StackPanel
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="0,10,10,10">
+                <Button Command="{Binding MoveSelectedHostUpCommand, Mode=OneWay}" CommandParameter="{Binding SelectedHost, Mode=OneWay}">
+                    <Viewbox>
+                        <Canvas Width="24" Height="24">
+                            <Path Data="M14,20H10V11L6.5,14.5L4.08,12.08L12,4.16L19.92,12.08L17.5,14.5L14,11V20Z" Fill="{DynamicResource ThemeForegroundBrush}" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button
+                    Margin="0,10,0,0"
+                    Command="{Binding MoveSelectedHostDownCommand, Mode=OneWay}"
+                    CommandParameter="{Binding SelectedHost, Mode=OneWay}">
+                    <Viewbox>
+                        <Canvas Width="24" Height="24">
+                            <Path Data="M10,4H14V13L17.5,9.5L19.92,11.92L12,19.84L4.08,11.92L6.5,9.5L10,13V4Z" Fill="{DynamicResource ThemeForegroundBrush}" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </StackPanel>
         </Grid>
 
         <Rectangle
@@ -114,14 +141,14 @@
             <TextBlock Text="The Marionet service will continue to run once you close this window." />
         </ContentControl>
         <WrapPanel Grid.Row="6" Margin="10,0,10,10">
-            <Button Command="{Binding ExitApplicationCommand}" Content="Exit application" />
+            <Button Command="{Binding ExitApplicationCommand, Mode=OneTime}" Content="Exit application" />
             <Button
                 Margin="10,0,0,0"
-                Command="{Binding OpenSettingsFileCommand}"
+                Command="{Binding OpenSettingsFileCommand, Mode=OneTime}"
                 Content="Open settings file" />
             <Button
                 Margin="10,0,0,0"
-                Command="{Binding OpenSettingsDirectoryCommand}"
+                Command="{Binding OpenSettingsDirectoryCommand, Mode=OneTime}"
                 Content="Open settings directory" />
         </WrapPanel>
     </Grid>

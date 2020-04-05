@@ -1,4 +1,5 @@
-﻿using Marionet.App;
+﻿using Avalonia.Threading;
+using Marionet.App;
 using Marionet.App.Configuration;
 using ReactiveUI;
 using System;
@@ -16,12 +17,20 @@ namespace Marionet.UI.ViewModels
         private bool isRunningAllowed;
         private bool isHostRunning;
         private List<string> knownHosts = default!;
+        private string? selectedHost = default;
         private bool preventClose = true;
 
         public MainWindowViewModel()
         {
             StartSupervisorCommand = ReactiveCommand.Create(StartSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, (v, c) => !v && c));
             StopSupervisorCommand = ReactiveCommand.Create(StopSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, (v, c) => v && c));
+            MoveSelectedHostUpCommand = ReactiveCommand.Create<string>(MoveSelectedHostUp, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, (k, s) => !string.IsNullOrEmpty(s) && k.IndexOf(s) > 0));
+            MoveSelectedHostDownCommand = ReactiveCommand.Create<string>(MoveSelectedHostDown, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, (k, s) =>
+            {
+                if (string.IsNullOrEmpty(s)) { return false; }
+                int index = k.IndexOf(s);
+                return index >= 0 && index < k.Count - 1;
+            }));
             OpenSettingsFileCommand = ReactiveCommand.Create(OpenSettingsFile);
             OpenSettingsDirectoryCommand = ReactiveCommand.Create(OpenSettingsDirectory);
             ExitApplicationCommand = ReactiveCommand.Create(ExitApplication, this.WhenAnyValue(x => x.PreventClose));
@@ -35,7 +44,7 @@ namespace Marionet.UI.ViewModels
             IsSupervisorRunning = Supervisor.Running;
             IsRunningAllowed = Supervisor.RunningAllowed;
             IsHostRunning = Supervisor.HostRunning;
-            SetKnownHostsList();
+            KnownHosts = Config.Instance.Desktops.ToList();
         }
 
         public event EventHandler? ExitTriggered;
@@ -76,6 +85,15 @@ namespace Marionet.UI.ViewModels
             }
         }
 
+        public string? SelectedHost
+        {
+            get => selectedHost;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref selectedHost, value);
+            }
+        }
+
         public bool PreventClose
         {
             get => preventClose;
@@ -88,6 +106,10 @@ namespace Marionet.UI.ViewModels
         public ReactiveCommand<Unit, Unit> StartSupervisorCommand { get; }
 
         public ReactiveCommand<Unit, Unit> StopSupervisorCommand { get; }
+
+        public ReactiveCommand<string, Unit> MoveSelectedHostUpCommand { get; }
+
+        public ReactiveCommand<string, Unit> MoveSelectedHostDownCommand { get; }
 
         public ReactiveCommand<Unit, Unit> OpenSettingsFileCommand { get; }
 
@@ -102,7 +124,33 @@ namespace Marionet.UI.ViewModels
 
         private static void StopSupervisor()
         {
-            Supervisor.Stop();
+            _ = Supervisor.Stop();
+        }
+
+        private void MoveSelectedHostUp(string which)
+        {
+            List<string> next = Config.Instance.Desktops.ToList();
+            int index = next.IndexOf(which);
+            if (index > 0)
+            {
+                next.RemoveAt(index);
+                next.Insert(index - 1, which);
+            }
+            Config.Instance.Desktops = next;
+            _ = Config.Save();
+        }
+
+        private void MoveSelectedHostDown(string which)
+        {
+            List<string> next = Config.Instance.Desktops.ToList();
+            int index = next.IndexOf(which);
+            if (index >= 0 && index < next.Count - 1)
+            {
+                next.RemoveAt(index);
+                next.Insert(index + 1, which);
+            }
+            Config.Instance.Desktops = next;
+            _ = Config.Save();
         }
 
         private void OpenSettingsFile()
@@ -134,44 +182,44 @@ namespace Marionet.UI.ViewModels
             Program.ShutdownApplication();
         }
 
-        private void SetKnownHostsList()
-        {
-            KnownHosts = Config.Instance.Desktops.Select(d =>
-            {
-                if (d != Config.Instance.Self && Config.Instance.DesktopAddresses.TryGetValue(d, out string? address))
-                {
-                    return $"{d} @ {address}";
-                }
-                else
-                {
-                    return d;
-                }
-            }).ToList();
-        }
-
         private void OnSupervisorStarted(object? sender, EventArgs e)
         {
-            IsSupervisorRunning = true;
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                IsSupervisorRunning = true;
+            });
         }
 
         private void OnSupervisorStopped(object? sender, EventArgs e)
         {
-            IsSupervisorRunning = false;
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                IsSupervisorRunning = false;
+            });
         }
 
         private void OnSupervisorRunningAllowedUpdated(object? sender, EventArgs e)
         {
-            IsRunningAllowed = Supervisor.RunningAllowed;
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                IsRunningAllowed = Supervisor.RunningAllowed;
+            });
         }
 
         private void OnHostRunningUpdated(object? sender, EventArgs e)
         {
-            IsHostRunning = Supervisor.HostRunning;
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                IsHostRunning = Supervisor.HostRunning;
+            });
         }
 
         private void OnSettingsReloaded(object? sender, EventArgs e)
         {
-            SetKnownHostsList();
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                KnownHosts = Config.Instance.Desktops.ToList();
+            });
         }
 
         #region IDisposable Support
