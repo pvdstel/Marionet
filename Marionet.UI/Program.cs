@@ -24,7 +24,7 @@ namespace Marionet.UI
         private static Mutex? isFirst;
         private static readonly Lazy<MainWindow> mainWindow = new Lazy<MainWindow>();
 
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             InvariantArgs = args.Select(a => a.ToUpperInvariant()).ToList().AsReadOnly();
 
@@ -35,7 +35,7 @@ namespace Marionet.UI
                 return;
             }
 
-            await Supervisor.Initialize();
+            Supervisor.Initialize().Wait();
 
             try
             {
