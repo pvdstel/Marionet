@@ -6,11 +6,16 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <OutputType>Exe</OutputType>
+    <ApplicationIcon>C:\Users\Paul\source\repos\Marionet\art\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\art\logo.ico" Link="logo.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.1.2" />

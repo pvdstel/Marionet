@@ -4,6 +4,7 @@
     <Nullable>enable</Nullable>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
+    <ApplicationIcon>C:\Users\Paul\source\repos\Marionet\art\logo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -20,6 +21,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="UIApp.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\art\logo.ico" Link="logo.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.9.7" />
