@@ -48,6 +48,10 @@ namespace Marionet.UI.ViewModels
             IsHostRunning = Supervisor.HostRunning;
             SelfName = Config.Instance.Self;
             KnownHosts = Config.Instance.Desktops.ToList();
+
+            var systemPermissions = PlatformSelector.GetSystemPersmissions();
+            IsAdmin = systemPermissions.IsAdmin().Result;
+            HasUiAccess = systemPermissions.HasUiAccess().Result;
         }
 
         public event EventHandler? ExitTriggered;
@@ -82,7 +86,8 @@ namespace Marionet.UI.ViewModels
         public string SelfName
         {
             get => selfName;
-            private set {
+            private set
+            {
                 this.RaiseAndSetIfChanged(ref selfName, value);
             }
         }
@@ -122,6 +127,10 @@ namespace Marionet.UI.ViewModels
                 this.RaiseAndSetIfChanged(ref preventClose, value);
             }
         }
+
+        public bool IsAdmin { get; }
+
+        public bool HasUiAccess { get; }
 
         public ReactiveCommand<Unit, Unit> StartSupervisorCommand { get; }
 

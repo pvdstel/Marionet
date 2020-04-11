@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Marionet.Core.Windows.Native
 {
@@ -35,5 +33,8 @@ namespace Marionet.Core.Windows.Native
 
         [DllImport("USER32.dll")]
         public static extern short GetKeyState(VirtualKey nVirtKey);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool GetTokenInformation(IntPtr TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass, IntPtr TokenInformation, uint TokenInformationLength, out uint ReturnLength);
     }
 }

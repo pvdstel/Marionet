@@ -6,6 +6,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:Marionet.UI.ViewModels;assembly=Marionet.UI"
     Title="{Binding SelfName, StringFormat=Marionet @ {0}}"
+    MinWidth="600"
+    MinHeight="370"
     d:DesignHeight="450"
     d:DesignWidth="800"
     Icon="/Assets/logo.ico"
@@ -105,6 +107,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
@@ -137,6 +141,17 @@
                         </Canvas>
                     </Viewbox>
                 </Button>
+            </StackPanel>
+            <Rectangle
+                Grid.Row="2"
+                Grid.ColumnSpan="2"
+                Height="1"
+                Fill="{DynamicResource ThemeBorderLowBrush}" />
+            <StackPanel Grid.Row="3" Margin="10">
+                <TextBlock IsVisible="{Binding IsAdmin, Mode=OneTime}" Text="Marionet is running under privileged user credentials." />
+                <TextBlock IsVisible="{Binding !IsAdmin, Mode=OneTime}" Text="Marionet is running under standard user credentials." />
+                <TextBlock IsVisible="{Binding HasUiAccess, Mode=OneTime}" Text="Marionet has user interface accessibility access." />
+                <TextBlock IsVisible="{Binding !HasUiAccess, Mode=OneTime}" Text="Marionet does not have user interface accessibility access." />
             </StackPanel>
         </Grid>
 
