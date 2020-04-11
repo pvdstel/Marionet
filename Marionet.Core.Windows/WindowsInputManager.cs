@@ -1,7 +1,5 @@
 ﻿using Marionet.Core.Input;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -10,7 +8,7 @@ namespace Marionet.Core.Windows
 {
     public class WindowsInputManager : IInputManager, IInputBlocking
     {
-        private ApplicationManager applicationManager;
+        private readonly ApplicationManager applicationManager;
         private readonly Channel<Native.MouseChannelMessage> mouseInputChannel;
         private readonly Channel<Native.KeyboardChannelMessage> keyboardInputChannel;
         private readonly Channel<Native.DisplayChannelMessage> displayInputChannel;

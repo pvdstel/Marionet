@@ -7,7 +7,7 @@ namespace Marionet.Core.Windows
 {
     internal class WindowsMouseController : IMouseController, IDisposable
     {
-        private IDisplayAdapter displayAdapter;
+        private readonly IDisplayAdapter displayAdapter;
         private Rectangle virtualDesktop = new Rectangle(0, 0, 1, 1);
         private double scaleFactorX = 1;
         private double scaleFactorY = 1;
@@ -123,7 +123,7 @@ namespace Marionet.Core.Windows
             var maxBottom = displays.Select(d => d.Bottom).Max();
             virtualDesktop = new Rectangle(minLeft, minTop, maxRight - minLeft, maxBottom - minTop);
             scaleFactorX = (double)virtualDesktop.Width / (virtualDesktop.Width - 1);
-            scaleFactorX = (double)virtualDesktop.Height / (virtualDesktop.Height - 1);
+            scaleFactorY = (double)virtualDesktop.Height / (virtualDesktop.Height - 1);
         }
 
         private Point ToVirtualDesktopCoordinates(Point point)

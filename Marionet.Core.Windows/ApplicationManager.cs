@@ -52,40 +52,39 @@ namespace Marionet.Core.Windows
                 IntPtr keyboardHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_KEYBOARD_LL, LowLevelKeyboardProc, IntPtr.Zero, 0);
                 IntPtr switchHook = Native.Methods.SetWinEventHook(Native.Constants.EVENT_SYSTEM_DESKTOPSWITCH, Native.Constants.EVENT_SYSTEM_DESKTOPSWITCH, IntPtr.Zero, SwitchDesktopHandler, 0, 0, 0);
 
-                Action exit = () =>
+                void exit()
                 {
                     appActions = null;
                     Native.Methods.UnhookWindowsHookEx(mouseHook);
                     Native.Methods.UnhookWindowsHookEx(keyboardHook);
                     Native.Methods.UnhookWinEvent(switchHook);
                     Application.Exit();
-                };
+                }
 
-                Action block = () =>
+                void block()
                 {
                     if (blockingWindow == default)
                     {
                         blockingWindow = new BlockingWindow();
                         blockingWindow.Show();
                     }
-                };
+                }
 
-                Action unblock = () =>
+                void unblock()
                 {
                     if (blockingWindow != default)
                     {
                         blockingWindow.Close();
                         blockingWindow = default;
                     }
-                };
+                }
 
                 Action invokeAction(Action action)
                 {
                     return () => messageWindow.Invoke(action);
                 }
 
-                appActions = (
-                    exit,
+                appActions = (exit,
                     invokeAction(block),
                     invokeAction(unblock)
                 );

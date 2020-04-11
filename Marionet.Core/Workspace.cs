@@ -18,7 +18,7 @@ namespace Marionet.Core
         private readonly string selfName;
         private readonly TaskCompletionSource<object?> initialized = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private SemaphoreSlim mutableStateLock = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim mutableStateLock = new SemaphoreSlim(1, 1);
         private Desktop selfDesktop = default!;
         private List<Desktop> desktops = default!;
         private DisplayLayout displayLayout = default!;
