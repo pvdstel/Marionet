@@ -1,7 +1,5 @@
 ﻿using Marionet.Core.Input;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -21,6 +19,7 @@ namespace Marionet.Core.Windows
         private readonly WindowsDisplayAdapter displayAdapter;
         private readonly WindowsMouseController mouseController;
         private readonly WindowsKeyboardController keyboardController;
+        private readonly InputSender inputSender;
 
         public WindowsInputManager()
         {
@@ -32,8 +31,10 @@ namespace Marionet.Core.Windows
             mouseListener = new WindowsMouseListener(mouseInputChannel.Reader, this);
             keyboardListener = new WindowsKeyboardListener(keyboardInputChannel.Reader);
             displayAdapter = new WindowsDisplayAdapter(displayInputChannel.Reader);
-            mouseController = new WindowsMouseController(displayAdapter);
-            keyboardController = new WindowsKeyboardController();
+
+            inputSender = new InputSender();
+            mouseController = new WindowsMouseController(inputSender, displayAdapter);
+            keyboardController = new WindowsKeyboardController(inputSender);
         }
 
         public event EventHandler? SystemEvent;
@@ -99,6 +100,7 @@ namespace Marionet.Core.Windows
                     applicationManager.Dispose();
                     mouseController.Dispose();
                     keyboardController.Dispose();
+                    inputSender.Dispose();
                     if (this.cancellationTokenSource != null)
                     {
                         this.cancellationTokenSource.Dispose();

@@ -9,6 +9,12 @@ namespace Marionet.Core.Windows
     internal class WindowsKeyboardController : IKeyboardController, IDisposable
     {
         private readonly HashSet<int> pressedKeyCodes = new HashSet<int>();
+        private readonly InputSender inputSender;
+
+        public WindowsKeyboardController(InputSender inputSender)
+        {
+            this.inputSender = inputSender;
+        }
 
         public Task PressKeyboardButton(int keyCode)
         {
@@ -27,10 +33,8 @@ namespace Marionet.Core.Windows
                 keyDown.Data.Keyboard.dwFlags |= Native.KEYEVENTF.EXTENDEDKEY;
             }
             keyDown.Data.Keyboard.dwExtraInfo = InputUtils.InstancePointer;
-            if (keyDown.SendSingleInput())
-            {
-                pressedKeyCodes.Add(keyCode);
-            }
+            pressedKeyCodes.Add(keyCode);
+            inputSender.AddInput(keyDown);
 
             return Task.CompletedTask;
         }
@@ -53,7 +57,7 @@ namespace Marionet.Core.Windows
                 keyUp.Data.Keyboard.dwFlags |= Native.KEYEVENTF.EXTENDEDKEY;
             }
             keyUp.Data.Keyboard.dwExtraInfo = InputUtils.InstancePointer;
-            keyUp.SendSingleInput();
+            inputSender.AddInput(keyUp);
 
             return Task.CompletedTask;
         }

@@ -8,13 +8,15 @@ namespace Marionet.Core.Windows
     internal class WindowsMouseController : IMouseController, IDisposable
     {
         private IDisplayAdapter displayAdapter;
+        private readonly InputSender inputSender;
         private Rectangle virtualDesktop = new Rectangle(0, 0, 1, 1);
         private double scaleFactorX = 1;
         private double scaleFactorY = 1;
         private const int VirtualDesktopDimensions = 65535;
 
-        public WindowsMouseController(IDisplayAdapter displayAdapter)
+        public WindowsMouseController(InputSender inputSender, IDisplayAdapter displayAdapter)
         {
+            this.inputSender = inputSender;
             this.displayAdapter = displayAdapter;
             UpdateVirtualDesktopSize();
             displayAdapter.DisplaysChanged += OnDisplaysChanged;
@@ -31,7 +33,7 @@ namespace Marionet.Core.Windows
             movement.Data.Mouse.dx = virtualDesktopPosition.X;
             movement.Data.Mouse.dy = virtualDesktopPosition.Y;
             movement.Data.Mouse.dwExtraInfo = InputUtils.InstancePointer;
-            movement.SendSingleInput();
+            inputSender.AddInput(movement);
             return Task.CompletedTask;
         }
 
@@ -64,7 +66,7 @@ namespace Marionet.Core.Windows
             }
 
             mouseDown.Data.Mouse.dwExtraInfo = InputUtils.InstancePointer;
-            mouseDown.SendSingleInput();
+            inputSender.AddInput(mouseDown);
             return Task.CompletedTask;
         }
 
@@ -97,7 +99,7 @@ namespace Marionet.Core.Windows
             }
 
             mouseUp.Data.Mouse.dwExtraInfo = InputUtils.InstancePointer;
-            mouseUp.SendSingleInput();
+            inputSender.AddInput(mouseUp);
             return Task.CompletedTask;
         }
 
@@ -110,7 +112,7 @@ namespace Marionet.Core.Windows
 
             wheel.Data.Mouse.dwFlags = direction == MouseWheelDirection.Horizontal ? Native.MOUSEEVENTF.HWHEEL : Native.MOUSEEVENTF.WHEEL;
             wheel.Data.Mouse.mouseData = delta;
-            wheel.SendSingleInput();
+            inputSender.AddInput(wheel);
             return Task.CompletedTask;
         }
 
