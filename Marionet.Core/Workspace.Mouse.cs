@@ -1,9 +1,7 @@
 ﻿using Marionet.Core.Communication;
 using Marionet.Core.Input;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Marionet.Core
@@ -222,6 +220,7 @@ namespace Marionet.Core
                             DebugMessage("unblocking local input");
                             inputManager.BlockInput(false);
                             DebugMessage($"moving to local display {nextDisplay}");
+                            await Task.Yield();
                             var localPoint = TranslateGlobalToLocal(nextGlobalPoint);
                             await inputManager.MouseController.MoveMouse(localPoint);
                             localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay!.Value);
