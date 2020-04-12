@@ -6,6 +6,8 @@
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <ApplicationIcon>C:\Users\Paul\source\repos\Marionet\art\logo.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Authors>pvdstel</Authors>
+    <Version>0.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />

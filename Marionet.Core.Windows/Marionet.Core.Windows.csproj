@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
+    <Authors>pvdstel</Authors>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -7,6 +7,8 @@
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <OutputType>Exe</OutputType>
     <ApplicationIcon>C:\Users\Paul\source\repos\Marionet\art\logo.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <Authors>pvdstel</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
