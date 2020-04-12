@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Marionet.App.Communication
@@ -16,12 +15,14 @@ namespace Marionet.App.Communication
         private readonly ILogger<NetHub> logger;
         private readonly ClientIdentifierService clientIdentifierService;
         private readonly WorkspaceNetwork workspaceNetwork;
+        private readonly Supervisor supervisor;
 
-        public NetHub(ILogger<NetHub> logger, ClientIdentifierService clientIdentifierService, WorkspaceNetwork workspaceNetwork)
+        public NetHub(ILogger<NetHub> logger, ClientIdentifierService clientIdentifierService, WorkspaceNetwork workspaceNetwork, Supervisor supervisor)
         {
             this.logger = logger;
             this.clientIdentifierService = clientIdentifierService;
             this.workspaceNetwork = workspaceNetwork;
+            this.supervisor = supervisor;
         }
 
         public override Task OnConnectedAsync()
@@ -37,6 +38,7 @@ namespace Marionet.App.Communication
             {
                 await clientIdentifierService.Remove(Context.ConnectionId);
                 workspaceNetwork.DisconnectClient(desktopName);
+                supervisor.SetPeerStatus(desktopName, Supervisor.PeerConnectionStatuses.IsClient, false);
             }
             logger.LogInformation($"Connection {Context.ConnectionId} disconnected");
             await base.OnDisconnectedAsync(exception);
@@ -47,9 +49,11 @@ namespace Marionet.App.Communication
             if (!(await clientIdentifierService.KnowsConnection(Context.ConnectionId)))
             {
                 await Configuration.Desktop.AddFromClient(knownNames ?? throw new ArgumentNullException(nameof(knownNames)));
+                desktopName = desktopName.NormalizeDesktopName();
                 await clientIdentifierService.Add(Context.ConnectionId, desktopName);
                 logger.LogDebug($"Desktop {desktopName} registered on connection {Context.ConnectionId}");
                 workspaceNetwork.ConnectClient(desktopName);
+                supervisor.SetPeerStatus(desktopName, Supervisor.PeerConnectionStatuses.IsClient, true);
             }
 
             return new IdentifyResult()

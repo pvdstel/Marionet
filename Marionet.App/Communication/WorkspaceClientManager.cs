@@ -19,6 +19,7 @@ namespace Marionet.App.Communication
         private readonly WorkspaceNetwork workspaceNetwork;
         private readonly IHubContext<NetHub, INetClient> netHub;
         private readonly IHostApplicationLifetime hostApplicationLifetime;
+        private readonly Supervisor supervisor;
         private readonly SemaphoreSlim mutationLock = new SemaphoreSlim(1, 1);
 
         public WorkspaceClientManager(
@@ -27,7 +28,8 @@ namespace Marionet.App.Communication
             IInputManager inputManager,
             WorkspaceNetwork workspaceNetwork,
             IHubContext<NetHub, INetClient> netHub,
-            IHostApplicationLifetime hostApplicationLifetime)
+            IHostApplicationLifetime hostApplicationLifetime,
+            Supervisor supervisor)
         {
             this.logger = logger;
             this.clientLogger = clientLogger;
@@ -35,6 +37,7 @@ namespace Marionet.App.Communication
             this.workspaceNetwork = workspaceNetwork;
             this.netHub = netHub;
             this.hostApplicationLifetime = hostApplicationLifetime;
+            this.supervisor = supervisor;
         }
 
         public void Start()
@@ -103,7 +106,7 @@ namespace Marionet.App.Communication
 
             var uri = Utility.GetNetHubUri(host, Configuration.Config.ServerPort);
             logger.LogDebug($"Adding client for {uri}");
-            NetClient client = new NetClient(uri, clientLogger, inputManager, workspaceNetwork);
+            NetClient client = new NetClient(uri, clientLogger, inputManager, workspaceNetwork, supervisor);
             clients.Add(desktopName.NormalizeDesktopName(), client);
             _ = client.Connect(hostApplicationLifetime.ApplicationStopping);
         }

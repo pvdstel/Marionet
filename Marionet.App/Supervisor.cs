@@ -1,8 +1,11 @@
 ﻿using Marionet.App.Configuration;
+using Marionet.Core;
 using Marionet.Core.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -19,6 +22,7 @@ namespace Marionet.App
         private static readonly INetwork network = PlatformSelector.GetNetwork();
         private static readonly SemaphoreSlim checkSemaphore = new SemaphoreSlim(1, 1);
         private static readonly SemaphoreSlim runningSemaphore = new SemaphoreSlim(1, 1);
+        private static readonly Dictionary<string, PeerConnectionStatuses> peerStatuses = new Dictionary<string, PeerConnectionStatuses>();
 
         private readonly IHostApplicationLifetime applicationLifetime;
 
@@ -30,11 +34,13 @@ namespace Marionet.App
         public static bool Running { get; private set; }
         public static bool RunningAllowed { get; private set; }
         public static bool HostRunning { get; private set; }
+        public static IReadOnlyDictionary<string, PeerConnectionStatuses> PeerStatuses => new ReadOnlyDictionary<string, PeerConnectionStatuses>(peerStatuses);
 
         public static event EventHandler? Started;
         public static event EventHandler? Stopped;
         public static event EventHandler? RunningAllowedUpdated;
         public static event EventHandler? HostRunningUpdated;
+        public static event EventHandler? PeerStatusesUpdated;
 
         private static event EventHandler? ShutdownRequested;
 
@@ -133,6 +139,22 @@ namespace Marionet.App
         {
             RunningAllowedUpdated += OnRunningAllowedUpdated;
             ShutdownRequested += OnShutdownRequested;
+        }
+
+        public void SetPeerStatus(string peerName, PeerConnectionStatuses type, bool value)
+        {
+            string normalizedName = peerName.NormalizeDesktopName();
+            PeerConnectionStatuses status = peerStatuses.ContainsKey(normalizedName) ? peerStatuses[normalizedName] : PeerConnectionStatuses.None;
+            if (value)
+            {
+                status |= type;
+            }
+            else
+            {
+                status &= ~type;
+            }
+            peerStatuses[normalizedName] = status;
+            PeerStatusesUpdated?.Invoke(this, new EventArgs());
         }
 
         private static void RunApp(string[] args)
@@ -259,6 +281,14 @@ namespace Marionet.App
             ShutdownRequested,
         }
 
+        [Flags]
+        public enum PeerConnectionStatuses
+        {
+            None = 0,
+            IsClient = 1,
+            IsServer = 2,
+        }
+
         #region IDisposable Support
         private bool disposedValue = false;
 
@@ -270,6 +300,8 @@ namespace Marionet.App
                 {
                     RunningAllowedUpdated -= OnRunningAllowedUpdated;
                     ShutdownRequested -= OnShutdownRequested;
+                    peerStatuses.Clear();
+                    PeerStatusesUpdated?.Invoke(this, new EventArgs());
                 }
 
                 disposedValue = true;

@@ -109,6 +109,9 @@
                 <RowDefinition />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
@@ -147,7 +150,39 @@
                 Grid.ColumnSpan="2"
                 Height="1"
                 Fill="{DynamicResource ThemeBorderLowBrush}" />
-            <StackPanel Grid.Row="3" Margin="10">
+            <TextBlock
+                Grid.Row="3"
+                Margin="10,10,10,0"
+                Text="Status of peers" />
+            <ListBox
+                Grid.Row="4"
+                Margin="10"
+                Items="{Binding PeerStatuses}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="vm:PeerStatus">
+                        <Panel>
+                            <TextBlock Text="{Binding Name}" />
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <TextBlock Margin="10,0,0,0" Text="Roles:" />
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    IsVisible="{Binding IsClient}"
+                                    Text="client" />
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    IsVisible="{Binding IsServer}"
+                                    Text="server" />
+                            </StackPanel>
+                        </Panel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Rectangle
+                Grid.Row="5"
+                Grid.ColumnSpan="2"
+                Height="1"
+                Fill="{DynamicResource ThemeBorderLowBrush}" />
+            <StackPanel Grid.Row="6" Margin="10">
                 <TextBlock IsVisible="{Binding IsAdmin, Mode=OneTime}" Text="Marionet is running under privileged user credentials." />
                 <TextBlock IsVisible="{Binding !IsAdmin, Mode=OneTime}" Text="Marionet is running under standard user credentials." />
                 <TextBlock IsVisible="{Binding HasUiAccess, Mode=OneTime}" Text="Marionet has user interface accessibility access." />

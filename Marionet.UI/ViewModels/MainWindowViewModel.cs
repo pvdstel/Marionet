@@ -19,6 +19,7 @@ namespace Marionet.UI.ViewModels
         private bool isWaiting;
         private string selfName = default!;
         private List<string> knownHosts = default!;
+        private List<PeerStatus> peerStatuses = default!;
         private string? selectedHost = default;
         private bool preventClose = true;
 
@@ -41,6 +42,7 @@ namespace Marionet.UI.ViewModels
             Supervisor.Stopped += OnSupervisorStopped;
             Supervisor.RunningAllowedUpdated += OnSupervisorRunningAllowedUpdated;
             Supervisor.HostRunningUpdated += OnHostRunningUpdated;
+            Supervisor.PeerStatusesUpdated += OnPeerStatusesUpdated;
             Config.SettingsReloaded += OnSettingsReloaded;
 
             IsSupervisorRunning = Supervisor.Running;
@@ -48,6 +50,7 @@ namespace Marionet.UI.ViewModels
             IsHostRunning = Supervisor.HostRunning;
             SelfName = Config.Instance.Self;
             KnownHosts = Config.Instance.Desktops.ToList();
+            PeerStatuses = GetPeerStatuses();
 
             var systemPermissions = PlatformSelector.GetSystemPersmissions();
             IsAdmin = systemPermissions.IsAdmin().Result;
@@ -119,6 +122,15 @@ namespace Marionet.UI.ViewModels
             }
         }
 
+        public List<PeerStatus> PeerStatuses
+        {
+            get => peerStatuses;
+            private set
+            {
+                this.RaiseAndSetIfChanged(ref peerStatuses, value);
+            }
+        }
+
         public bool PreventClose
         {
             get => preventClose;
@@ -145,6 +157,13 @@ namespace Marionet.UI.ViewModels
         public ReactiveCommand<Unit, Unit> OpenSettingsDirectoryCommand { get; }
 
         public ReactiveCommand<Unit, Unit> ExitApplicationCommand { get; }
+
+        private List<PeerStatus> GetPeerStatuses() =>
+            Supervisor.PeerStatuses.Select(kvp => new PeerStatus(
+                kvp.Key,
+                kvp.Value.HasFlag(Supervisor.PeerConnectionStatuses.IsClient),
+                kvp.Value.HasFlag(Supervisor.PeerConnectionStatuses.IsServer)
+            )).ToList();
 
         private void StartSupervisor()
         {
@@ -250,6 +269,14 @@ namespace Marionet.UI.ViewModels
             });
         }
 
+        private void OnPeerStatusesUpdated(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                PeerStatuses = GetPeerStatuses();
+            });
+        }
+
         private void OnSettingsReloaded(object? sender, EventArgs e)
         {
             Dispatcher.UIThread.InvokeAsync(() =>
@@ -272,6 +299,7 @@ namespace Marionet.UI.ViewModels
                     Supervisor.Started -= OnSupervisorStarted;
                     Supervisor.Stopped -= OnSupervisorStopped;
                     Supervisor.RunningAllowedUpdated -= OnSupervisorRunningAllowedUpdated;
+                    Supervisor.PeerStatusesUpdated -= OnPeerStatusesUpdated;
                 }
 
                 disposedValue = true;

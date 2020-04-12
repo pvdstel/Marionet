@@ -14,18 +14,22 @@ namespace Marionet.App.Communication
     public class NetClient : SignalRClient<NetHubInterface>, INetClient
     {
         private readonly WorkspaceNetwork workspaceNetwork;
+        private readonly ILogger<NetClient> logger;
         private TaskCompletionSource<object?> connectionTaskCompletionSource;
-        private ILogger<NetClient> logger;
 
         private string? serverName;
 
-        public NetClient(Uri uri, ILogger<NetClient> logger, IInputManager inputManager, WorkspaceNetwork workspaceNetwork) : base(uri, logger)
+        public NetClient(Uri uri, ILogger<NetClient> logger, IInputManager inputManager, WorkspaceNetwork workspaceNetwork, Supervisor supervisor) : base(uri, logger)
         {
             this.logger = logger;
             this.workspaceNetwork = workspaceNetwork;
             connectionTaskCompletionSource = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
             this.Disconnected += (sender, e) =>
             {
+                if (!string.IsNullOrEmpty(serverName))
+                {
+                    supervisor.SetPeerStatus(serverName, Supervisor.PeerConnectionStatuses.IsServer, false);
+                }
                 connectionTaskCompletionSource.TrySetCanceled();
             };
             this.ConnectingStarted += (sender, e) =>
@@ -44,6 +48,10 @@ namespace Marionet.App.Communication
                 await Configuration.Desktop.AddFromServer(serverIdentity.Desktops!);
 
                 await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays().ToList());
+                if (!string.IsNullOrEmpty(serverName))
+                {
+                    supervisor.SetPeerStatus(serverName, Supervisor.PeerConnectionStatuses.IsServer, true);
+                }
                 connectionTaskCompletionSource.TrySetResult(null);
             };
         }
