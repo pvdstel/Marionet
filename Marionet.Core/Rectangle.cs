@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Marionet.Core
 {
@@ -49,15 +47,7 @@ namespace Marionet.Core
                    Height == other.Height;
         }
 
-        public override int GetHashCode()
-        {
-            int hashCode = 466501756;
-            hashCode = hashCode * -1521134295 + X.GetHashCode();
-            hashCode = hashCode * -1521134295 + Y.GetHashCode();
-            hashCode = hashCode * -1521134295 + Width.GetHashCode();
-            hashCode = hashCode * -1521134295 + Height.GetHashCode();
-            return hashCode;
-        }
+        public override int GetHashCode() => HashCode.Combine(X, Y, Width, Height);
 
         public override string ToString()
         {
