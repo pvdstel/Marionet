@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <Authors>pvdstel</Authors>
-    <Version>0.1.2</Version>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
