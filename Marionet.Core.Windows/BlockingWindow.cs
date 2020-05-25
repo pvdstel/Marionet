@@ -13,10 +13,11 @@ namespace Marionet.Core.Windows
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
 
-            var center = Screen.PrimaryScreen.Bounds.Width / 2;
+            var centerX = Screen.PrimaryScreen.Bounds.Width / 2;
+            var centerY = Screen.PrimaryScreen.Bounds.Height / 2;
 
-            Top = 0;
-            Left = center - 1;
+            Top = centerY - 1;
+            Left = centerX - 1;
             Width = 2;
             Height = 2;
 
@@ -31,8 +32,9 @@ namespace Marionet.Core.Windows
         public new void Show()
         {
             Opacity = 0.01;
-            var center = Screen.PrimaryScreen.Bounds.Width / 2;
-            Native.Methods.SetCursorPos(center, 1);
+            var centerX = Screen.PrimaryScreen.Bounds.Width / 2;
+            var centerY = Screen.PrimaryScreen.Bounds.Height / 2;
+            Native.Methods.SetCursorPos(centerX, centerY);
         }
 
         public new void Hide()
@@ -43,10 +45,11 @@ namespace Marionet.Core.Windows
         private async void DisplaysChanged()
         {
             await Task.Delay(WindowsDisplayAdapter.DisplayChangeProcessingDelay);
-            var center = Screen.PrimaryScreen.Bounds.Width / 2;
-            Top = 0;
-            Left = center - 1;
-            Native.Methods.SetCursorPos(center, 1);
+            var centerX = Screen.PrimaryScreen.Bounds.Width / 2;
+            var centerY = Screen.PrimaryScreen.Bounds.Height / 2;
+            Top = centerY - 1;
+            Left = centerX - 1;
+            Native.Methods.SetCursorPos(centerX, centerY);
         }
 
         protected override void WndProc(ref Message m)
