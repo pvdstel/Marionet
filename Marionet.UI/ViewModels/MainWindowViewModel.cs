@@ -7,12 +7,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Marionet.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
+        private string appVersion;
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
         private bool isHostRunning;
@@ -59,6 +61,8 @@ namespace Marionet.UI.ViewModels
 
         public event EventHandler? ExitTriggered;
 
+        public string AppVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
+        
         public bool IsSupervisorRunning
         {
             get => isSupervisorRunning;
