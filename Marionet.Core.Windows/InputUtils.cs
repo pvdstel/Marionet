@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Marionet.Core.Windows
@@ -9,6 +10,9 @@ namespace Marionet.Core.Windows
     {
         private const int InstancePointerValue = 186330933;
         public static IntPtr InstancePointer { get; } = new IntPtr(InstancePointerValue);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsMarionetInstancePointer(this IntPtr ptr) => ptr == InstancePointer;
 
         public static bool SendSingleInput(this Native.INPUT input)
         {

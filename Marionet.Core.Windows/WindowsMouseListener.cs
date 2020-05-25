@@ -8,8 +8,8 @@ namespace Marionet.Core.Windows
 {
     internal class WindowsMouseListener : IMouseListener
     {
-        private ChannelReader<Native.MouseChannelMessage> mouseChannelReader;
-        private IInputBlocking inputBlocking;
+        private readonly ChannelReader<Native.MouseChannelMessage> mouseChannelReader;
+        private readonly IInputBlocking inputBlocking;
 
         public WindowsMouseListener(ChannelReader<Native.MouseChannelMessage> mouseChannelReader, IInputBlocking inputBlocking)
         {
@@ -46,7 +46,7 @@ namespace Marionet.Core.Windows
 
         private void ProcessMessage(Native.MouseChannelMessage message)
         {
-            if (message.lParam.dwExtraInfo == InputUtils.InstancePointer)
+            if (message.lParam.dwExtraInfo.IsMarionetInstancePointer())
             {
                 return;
             }

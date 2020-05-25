@@ -121,7 +121,7 @@ namespace Marionet.Core.Windows
                 var st = Marshal.PtrToStructure<Native.MSLLHOOKSTRUCT>(lParam);
                 mouseChannelWriter.TryWrite(new Native.MouseChannelMessage { wParam = (Native.LowLevelMouseProc_wParam)(uint)wParam, lParam = st });
 
-                if (inputBlocking.IsInputBlocked)
+                if (inputBlocking.IsInputBlocked && !st.dwExtraInfo.IsMarionetInstancePointer())
                 {
                     return new IntPtr(1);
                 }
@@ -136,7 +136,7 @@ namespace Marionet.Core.Windows
                 var st = Marshal.PtrToStructure<Native.KBDLLHOOKSTRUCT>(lParam);
                 keyboardChannelWriter.TryWrite(new Native.KeyboardChannelMessage { wParam = (Native.LowLevelKeyboardProc_wParam)(uint)wParam, lParam = st });
 
-                if (inputBlocking.IsInputBlocked)
+                if (inputBlocking.IsInputBlocked && !st.dwExtraInfo.IsMarionetInstancePointer())
                 {
                     return new IntPtr(1);
                 }

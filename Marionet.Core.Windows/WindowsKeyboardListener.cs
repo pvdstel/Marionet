@@ -8,7 +8,7 @@ namespace Marionet.Core.Windows
 {
     internal class WindowsKeyboardListener : IKeyboardListener
     {
-        private ChannelReader<Native.KeyboardChannelMessage> keyboardChannelReader;
+        private readonly ChannelReader<Native.KeyboardChannelMessage> keyboardChannelReader;
 
         public WindowsKeyboardListener(ChannelReader<Native.KeyboardChannelMessage> keyboardChannelReader)
         {
@@ -36,7 +36,7 @@ namespace Marionet.Core.Windows
 
         private void ProcessMessage(Native.KeyboardChannelMessage message)
         {
-            if (message.lParam.dwExtraInfo == InputUtils.InstancePointer)
+            if (message.lParam.dwExtraInfo.IsMarionetInstancePointer())
             {
                 return;
             }
