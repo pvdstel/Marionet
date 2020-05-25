@@ -63,6 +63,7 @@ namespace Marionet.Core
             inputManager.MouseListener.MouseWheel += OnMouseWheel;
             inputManager.KeyboardListener.KeyboardButtonPressed += OnKeyboardButtonPressed;
             inputManager.KeyboardListener.KeyboardButtonReleased += OnKeyboardButtonReleased;
+            inputManager.SystemEvent += OnSystemEvent;
         }
 
         public async Task Initialize()
@@ -82,6 +83,16 @@ namespace Marionet.Core
             mutableStateLock.Release();
 
             initialized.TrySetResult(null);
+        }
+
+        private async void OnSystemEvent(object sender, EventArgs e)
+        {
+            await EnsureInitialized();
+            await mutableStateLock.WaitAsync();
+
+            await ReturnToPrimaryDisplay();
+
+            mutableStateLock.Release();
         }
 
         private async void OnControlAssumed(object sender, ClientConnectionChangedEventArgs e)
@@ -225,6 +236,7 @@ namespace Marionet.Core
                     inputManager.MouseListener.MouseWheel -= OnMouseWheel;
                     inputManager.KeyboardListener.KeyboardButtonPressed -= OnKeyboardButtonPressed;
                     inputManager.KeyboardListener.KeyboardButtonReleased -= OnKeyboardButtonReleased;
+                    inputManager.SystemEvent -= OnSystemEvent;
                 }
 
                 disposedValue = true;
