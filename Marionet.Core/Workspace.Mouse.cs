@@ -217,12 +217,13 @@ namespace Marionet.Core
                         }
                         if (nextDesktop == selfDesktop)
                         {
+                            DebugMessage($"moving to local display {nextDisplay}");
+                            var localPoint = TranslateGlobalToLocal(nextGlobalPoint);
+                            DebugMessage($"placing cursor at {localPoint} (global {nextGlobalPoint}");
+                            await inputManager.MouseController.MoveMouse(localPoint);
+                            await Task.Yield();
                             DebugMessage("unblocking local input");
                             inputManager.BlockInput(false);
-                            DebugMessage($"moving to local display {nextDisplay}");
-                            await Task.Yield();
-                            var localPoint = TranslateGlobalToLocal(nextGlobalPoint);
-                            await inputManager.MouseController.MoveMouse(localPoint);
                             localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay!.Value);
                         }
                         else
