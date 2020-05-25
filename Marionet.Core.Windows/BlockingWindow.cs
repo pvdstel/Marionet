@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,11 +21,23 @@ namespace Marionet.Core.Windows
             Height = 2;
 
             BackColor = Color.White;
-            Opacity = 0.01;
+            Opacity = 0;
             TopMost = true;
             Cursor.Hide();
 
+            base.Show();
+        }
+
+        public new void Show()
+        {
+            Opacity = 0.01;
+            var center = Screen.PrimaryScreen.Bounds.Width / 2;
             Native.Methods.SetCursorPos(center, 1);
+        }
+
+        public new void Hide()
+        {
+            Opacity = 0;
         }
 
         private async void DisplaysChanged()

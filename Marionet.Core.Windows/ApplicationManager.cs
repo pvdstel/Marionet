@@ -46,7 +46,7 @@ namespace Marionet.Core.Windows
                 Application.SetHighDpiMode(HighDpiMode.PerMonitor);
 
                 MessageWindow messageWindow = new MessageWindow(displayChannelWriter);
-                BlockingWindow? blockingWindow = default;
+                BlockingWindow blockingWindow = new BlockingWindow();
 
                 IntPtr mouseHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_MOUSE_LL, LowLevelMouseProc, IntPtr.Zero, 0);
                 IntPtr keyboardHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_KEYBOARD_LL, LowLevelKeyboardProc, IntPtr.Zero, 0);
@@ -63,20 +63,12 @@ namespace Marionet.Core.Windows
 
                 void block()
                 {
-                    if (blockingWindow == default)
-                    {
-                        blockingWindow = new BlockingWindow();
-                        blockingWindow.Show();
-                    }
+                    blockingWindow.Show();
                 }
 
                 void unblock()
                 {
-                    if (blockingWindow != default)
-                    {
-                        blockingWindow.Close();
-                        blockingWindow = default;
-                    }
+                    blockingWindow.Hide();
                 }
 
                 Action invokeAction(Action action)
