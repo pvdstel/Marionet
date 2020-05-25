@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -45,6 +45,17 @@ namespace Marionet.Core.Windows
             }
 
             base.WndProc(ref m);
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                // turn on WS_EX_TOOLWINDOW style bit
+                cp.ExStyle |= 0x80;
+                return cp;
+            }
         }
     }
 }
