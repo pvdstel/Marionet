@@ -6,7 +6,7 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <OutputType>Exe</OutputType>
-    <ApplicationIcon>C:\Users\Paul\source\repos\Marionet\art\logo.ico</ApplicationIcon>
+    <ApplicationIcon>..\art\logo.ico</ApplicationIcon>
     <Version>0.2.0</Version>
     <Authors>pvdstel</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
