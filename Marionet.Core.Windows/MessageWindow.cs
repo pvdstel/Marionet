@@ -1,12 +1,11 @@
-﻿using System.ComponentModel;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using System.Windows.Forms;
 
 namespace Marionet.Core.Windows
 {
     internal class MessageWindow : Form
     {
-        private ChannelWriter<Native.DisplayChannelMessage> displayChannelWriter;
+        private readonly ChannelWriter<Native.DisplayChannelMessage> displayChannelWriter;
 
         public MessageWindow(ChannelWriter<Native.DisplayChannelMessage> displayChannelWriter)
         {
