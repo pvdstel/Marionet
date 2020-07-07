@@ -22,10 +22,10 @@
     </Window.Title>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="RunningBrush">#18C45A</SolidColorBrush>
-        <SolidColorBrush x:Key="OffBrush">#C41818</SolidColorBrush>
-        <SolidColorBrush x:Key="EnabledBrush">#00B7FF</SolidColorBrush>
-        <SolidColorBrush x:Key="DisabledBrush">#FF9100</SolidColorBrush>
+        <SolidColorBrush x:Key="RunningBrush">#00E676</SolidColorBrush>
+        <SolidColorBrush x:Key="OffBrush">#F44336</SolidColorBrush>
+        <SolidColorBrush x:Key="EnabledBrush">#40C4FF</SolidColorBrush>
+        <SolidColorBrush x:Key="DisabledBrush">#FFAB40</SolidColorBrush>
     </Window.Resources>
 
     <Grid>
