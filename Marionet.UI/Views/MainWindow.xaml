@@ -15,7 +15,7 @@
     mc:Ignorable="d">
 
     <Window.Title>
-        <MultiBinding StringFormat="Marionet {0} @ {1}">
+        <MultiBinding Mode="OneTime" StringFormat="Marionet {0} @ {1}">
             <Binding Path="AppVersion" />
             <Binding Path="SelfName" />
         </MultiBinding>
