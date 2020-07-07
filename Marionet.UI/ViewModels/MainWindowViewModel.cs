@@ -14,7 +14,6 @@ namespace Marionet.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
-        private string appVersion;
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
         private bool isHostRunning;
