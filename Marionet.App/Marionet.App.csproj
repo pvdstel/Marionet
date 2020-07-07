@@ -7,7 +7,7 @@
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <OutputType>Exe</OutputType>
     <ApplicationIcon>..\art\logo.ico</ApplicationIcon>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>pvdstel</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
