@@ -70,7 +70,7 @@
                     Height="10"
                     Margin="3,0,13,0"
                     Fill="{DynamicResource DisabledBrush}" />
-                <TextBlock Text="The Marionet service supervisor is not allowed to run by the run conditions." />
+                <TextBlock Text="The Marionet service is not allowed to run by the run conditions." />
             </WrapPanel>
             <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsHostRunning, Mode=OneWay}">
                 <Ellipse
