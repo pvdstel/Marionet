@@ -90,7 +90,16 @@ namespace Marionet.Core
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
 
-            await ReturnToPrimaryDisplay();
+            if (localState is LocalState.Controlling)
+            {
+                await ReturnToPrimaryDisplay();
+            }
+            else if (localState is LocalState.Controlled controlled)
+            {
+                var nextGlobalPoint = TranslateLocalToGlobal(await inputManager.MouseListener.GetCursorPosition());
+                var controllers = await workspaceNetwork.GetClientDesktops(controlled.By);
+                await controllers.ControlledMouseMove(nextGlobalPoint);
+            }
 
             mutableStateLock.Release();
         }
