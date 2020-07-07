@@ -12,6 +12,7 @@ namespace Marionet.Core.Windows
 
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
+            Text = "Marionet Blocker";
 
             var centerX = Screen.PrimaryScreen.Bounds.Width / 2;
             var centerY = Screen.PrimaryScreen.Bounds.Height / 2;
@@ -35,6 +36,7 @@ namespace Marionet.Core.Windows
             var centerX = Screen.PrimaryScreen.Bounds.Width / 2;
             var centerY = Screen.PrimaryScreen.Bounds.Height / 2;
             Native.Methods.SetCursorPos(centerX, centerY);
+            Activate();
         }
 
         public new void Hide()
@@ -62,6 +64,8 @@ namespace Marionet.Core.Windows
             base.WndProc(ref m);
         }
 
+        protected override bool ShowWithoutActivation => true;
+
         protected override CreateParams CreateParams
         {
             get
@@ -69,6 +73,7 @@ namespace Marionet.Core.Windows
                 CreateParams cp = base.CreateParams;
                 // turn on WS_EX_TOOLWINDOW style bit
                 cp.ExStyle |= 0x80;
+                cp.ExStyle |= 0x8000000; // WS_EX_NOACTIVATE
                 return cp;
             }
         }
