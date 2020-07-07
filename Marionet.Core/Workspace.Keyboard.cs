@@ -1,6 +1,5 @@
 ﻿using Marionet.Core.Communication;
 using Marionet.Core.Input;
-using System;
 
 namespace Marionet.Core
 {
@@ -38,6 +37,7 @@ namespace Marionet.Core
             }
             else if (localState is LocalState.Relinquished)
             {
+                DebugMessage("Input is likely blocked.");
                 await ReturnToPrimaryDisplay();
             }
 
