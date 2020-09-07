@@ -13,7 +13,7 @@ namespace Marionet.Core
             int averageY = (currentPosition.Y + nextPosition.Y) / 2;
             int stickyCornerSize = configurationProvider.GetStickyCornerSize();
 
-            if (averageY < currentDisplay.Top + stickyCornerSize || averageY > currentDisplay.Bottom - stickyCornerSize)
+            if (stickyCornerSize > 0 && (averageY < currentDisplay.Top + stickyCornerSize || averageY > currentDisplay.Bottom - stickyCornerSize))
             {
                 int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, currentPosition.X));
                 int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, currentPosition.Y));
