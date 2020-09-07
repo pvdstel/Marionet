@@ -52,6 +52,10 @@ namespace Marionet.Core.Windows
         public new void Hide()
         {
             Opacity = 0;
+
+            // Hide and show the blocking window to activate the top window on the window stack
+            base.Hide();
+            base.Show();
         }
 
         private async void DisplaysChanged()
