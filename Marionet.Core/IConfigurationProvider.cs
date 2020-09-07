@@ -7,5 +7,7 @@ namespace Marionet.Core
         string GetSelfName();
 
         List<string> GetDesktopOrder();
+
+        int GetStickyCornerSize();
     }
 }

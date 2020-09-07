@@ -1,8 +1,5 @@
 ﻿using Marionet.Core;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Marionet.App.Core
 {
@@ -11,5 +8,7 @@ namespace Marionet.App.Core
         public List<string> GetDesktopOrder() => Configuration.Config.Instance.Desktops;
 
         public string GetSelfName() => Configuration.Config.Instance.Self;
+
+        public int GetStickyCornerSize() => Configuration.Config.Instance.StickyCornerSize;
     }
 }

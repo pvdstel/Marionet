@@ -8,13 +8,12 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
-        private const int StickySize = 6;
-
-        private static (bool isSticky, Point? newPosition) GetStickyPosition(Point currentPosition, Point nextPosition, Rectangle currentDisplay)
+        private (bool isSticky, Point? newPosition) GetStickyPosition(Point currentPosition, Point nextPosition, Rectangle currentDisplay)
         {
             int averageY = (currentPosition.Y + nextPosition.Y) / 2;
+            int stickyCornerSize = configurationProvider.GetStickyCornerSize();
 
-            if (averageY < currentDisplay.Top + StickySize || averageY > currentDisplay.Bottom - StickySize)
+            if (averageY < currentDisplay.Top + stickyCornerSize || averageY > currentDisplay.Bottom - stickyCornerSize)
             {
                 int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, currentPosition.X));
                 int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, currentPosition.Y));
