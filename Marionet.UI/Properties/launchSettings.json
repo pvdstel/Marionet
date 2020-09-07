@@ -1,7 +1,8 @@
 {
   "profiles": {
     "Marionet.UI": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "start"
     }
   }
 }
