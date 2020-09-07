@@ -8,6 +8,22 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
+        private const int StickySize = 6;
+
+        private static (bool isSticky, Point? newPosition) GetStickyPosition(Point currentPosition, Point nextPosition, Rectangle currentDisplay)
+        {
+            int averageY = (currentPosition.Y + nextPosition.Y) / 2;
+
+            if (averageY < currentDisplay.Top + StickySize || averageY > currentDisplay.Bottom - StickySize)
+            {
+                int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, currentPosition.X));
+                int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, currentPosition.Y));
+                return (true, new Point(x, y));
+            }
+
+            return (false, null);
+        }
+
         private async void OnMouseMoved(object sender, MouseMoveEventArgs e)
         {
             await EnsureInitialized();
@@ -38,7 +54,8 @@ namespace Marionet.Core
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
 
-            if (localState is LocalState.Controlling controlling) {
+            if (localState is LocalState.Controlling controlling)
+            {
                 var client = await workspaceNetwork.GetClientDesktop(controlling.ActiveDesktop.Name);
                 if (client != null)
                 {
@@ -169,16 +186,21 @@ namespace Marionet.Core
                     var (nextDesktop, nextDisplay) = next.Value;
                     if (nextDesktop != selfDesktop)
                     {
-                        DebugMessage("blocking local input");
-                        inputManager.BlockInput(true);
-                        localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
-                        DebugMessage($"assuming control of {nextDesktop.Name} on display {nextDisplay} on position {nextGlobalPoint}");
-                        localState = new LocalState.Controlling(nextDesktop, nextDisplay, nextGlobalPoint);
-                        var nextClient = await workspaceNetwork.GetClientDesktop(nextDesktop.Name);
-                        if (nextClient != null)
+                        var (isSticky, _) = GetStickyPosition(nextGlobalPoint, nextGlobalPoint, uncontrolled.ActiveDisplay);
+
+                        if (!isSticky)
                         {
-                            await nextClient.AssumeControl();
-                            await nextClient.MoveMouse(nextGlobalPoint);
+                            DebugMessage("blocking local input");
+                            inputManager.BlockInput(true);
+                            localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                            DebugMessage($"assuming control of {nextDesktop.Name} on display {nextDisplay} on position {nextGlobalPoint}");
+                            localState = new LocalState.Controlling(nextDesktop, nextDisplay, nextGlobalPoint);
+                            var nextClient = await workspaceNetwork.GetClientDesktop(nextDesktop.Name);
+                            if (nextClient != null)
+                            {
+                                await nextClient.AssumeControl();
+                                await nextClient.MoveMouse(nextGlobalPoint);
+                            }
                         }
                     }
                     else
@@ -207,7 +229,24 @@ namespace Marionet.Core
                 var next = displayLayout.FindPoint(nextGlobalPoint);
                 if (next.HasValue)
                 {
-                    var (nextDesktop, nextDisplay) = next.Value;
+                    var (isSticky, stickyPoint) = GetStickyPosition(controlling.CursorPosition, nextGlobalPoint, controlling.ActiveDisplay);
+                    Desktop nextDesktop;
+                    Rectangle nextDisplay;
+
+                    DebugMessage($"sticky: {isSticky} @ {stickyPoint}");
+
+                    if (isSticky)
+                    {
+                        // stickyPoint is guaranteed to have a value
+                        nextGlobalPoint = stickyPoint!.Value;
+                        nextDesktop = controlling.ActiveDesktop;
+                        nextDisplay = controlling.ActiveDisplay;
+                    }
+                    else
+                    {
+                        (nextDesktop, nextDisplay) = next.Value;
+                    }
+
                     if (nextDesktop != controlling.ActiveDesktop)
                     {
                         DebugMessage($"relinquishing {controlling.ActiveDesktop}");
