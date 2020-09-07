@@ -26,9 +26,11 @@ namespace Marionet.App.Configuration
             {
                 Directory.CreateDirectory(ConfigurationDirectory);
             }
-            settingsWatcher = new FileSystemWatcher(ConfigurationDirectory);
-            settingsWatcher.NotifyFilter = NotifyFilters.LastWrite;
-            settingsWatcher.Filter = "*.json";
+            settingsWatcher = new FileSystemWatcher(ConfigurationDirectory)
+            {
+                NotifyFilter = NotifyFilters.LastWrite,
+                Filter = "*.json"
+            };
             settingsWatcher.Changed += SettingsFileChanged;
             settingsWatcher.EnableRaisingEvents = true;
         }
