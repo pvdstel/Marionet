@@ -28,6 +28,16 @@ namespace Marionet.Core.Windows
             Cursor.Hide();
 
             base.Show();
+
+            FormClosing += OnFormClosing;
+        }
+
+        private void OnFormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+            }
         }
 
         public new void Show()
@@ -76,6 +86,12 @@ namespace Marionet.Core.Windows
                 cp.ExStyle |= 0x8000000; // WS_EX_NOACTIVATE
                 return cp;
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            FormClosing -= OnFormClosing;
+            base.Dispose(disposing);
         }
     }
 }
