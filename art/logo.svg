@@ -43,7 +43,11 @@
       <stop
          id="stop848"
          offset="0"
-         style="stop-color:#1be2ed;stop-opacity:1" />
+         style="stop-color:#edeb1b;stop-opacity:1" />
+      <stop
+         style="stop-color:#e16e6e;stop-opacity:1"
+         offset="0.5"
+         id="stop1340" />
       <stop
          id="stop850"
          offset="1"
@@ -111,8 +115,8 @@
      showgrid="false"
      inkscape:current-layer="layer2"
      inkscape:document-units="px"
-     inkscape:cy="23.499114"
-     inkscape:cx="23.439199"
+     inkscape:cy="27.151464"
+     inkscape:cx="25.474316"
      inkscape:zoom="16"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0"
