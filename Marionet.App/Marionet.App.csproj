@@ -10,6 +10,7 @@
     <Version>0.3.1</Version>
     <Authors>pvdstel</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>Marionet.App</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
