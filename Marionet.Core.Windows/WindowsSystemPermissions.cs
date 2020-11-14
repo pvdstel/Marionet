@@ -16,7 +16,7 @@ namespace Marionet.Core.Windows
 
             Native.Methods.GetTokenInformation(token, Native.TOKEN_INFORMATION_CLASS.TokenUIAccess, IntPtr.Zero, tokenInfoLength, out tokenInfoLength);
             IntPtr tokenInfo = Marshal.AllocHGlobal(token);
-            bool success = Native.Methods.GetTokenInformation(token, Native.TOKEN_INFORMATION_CLASS.TokenUIAccess, tokenInfo, tokenInfoLength, out tokenInfoLength);
+            bool success = Native.Methods.GetTokenInformation(token, Native.TOKEN_INFORMATION_CLASS.TokenUIAccess, tokenInfo, tokenInfoLength, out _);
 
             if (success)
             {

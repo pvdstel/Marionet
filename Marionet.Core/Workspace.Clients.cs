@@ -199,7 +199,7 @@ namespace Marionet.Core
 
             var primaryDisplay = selfDesktop.PrimaryDisplay!.Value;
             DebugMessage("unblocking local input");
-            inputManager.BlockInput(false);
+            await inputManager.BlockInput(false);
             DebugMessage($"moving to local display {primaryDisplay}");
             var localPoint = new Point(primaryDisplay.Width / 2, primaryDisplay.Height / 2);
             await inputManager.MouseController.MoveMouse(localPoint);

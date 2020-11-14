@@ -134,7 +134,7 @@ namespace Marionet.Core
             by.Add(desktopName);
             localState = new LocalState.Controlled(by);
             DebugMessage("unblocking local input");
-            inputManager.BlockInput(false);
+            await inputManager.BlockInput(false);
 
             mutableStateLock.Release();
         }
@@ -155,7 +155,7 @@ namespace Marionet.Core
                     DebugMessage("no controllers left, becoming relinquished");
                     localState = new LocalState.Relinquished();
                     DebugMessage("blocking local input");
-                    inputManager.BlockInput(true);
+                    await inputManager.BlockInput(true);
                 }
                 else
                 {
@@ -219,8 +219,6 @@ namespace Marionet.Core
             {
                 if (disposing)
                 {
-                    mutableStateLock.Dispose();
-
                     workspaceNetwork.ClientConnected -= OnClientConnected;
                     workspaceNetwork.ClientDisconnected -= OnClientDisconnected;
                     workspaceNetwork.ClientDisplaysChanged -= OnClientDisplaysChanged;
@@ -246,6 +244,9 @@ namespace Marionet.Core
                     inputManager.KeyboardListener.KeyboardButtonPressed -= OnKeyboardButtonPressed;
                     inputManager.KeyboardListener.KeyboardButtonReleased -= OnKeyboardButtonReleased;
                     inputManager.SystemEvent -= OnSystemEvent;
+
+                    // Must happen after events are unsubscribed; they might still trigger otherwise.
+                    mutableStateLock.Dispose();
                 }
 
                 disposedValue = true;

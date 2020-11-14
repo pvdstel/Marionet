@@ -29,7 +29,7 @@ namespace Marionet.Core.Windows
                         Native.KeyboardChannelMessage message = await keyboardChannelReader.ReadAsync(cancellationToken);
                         ProcessMessage(message);
                     }
-                });
+                }, cancellationToken);
             }
             catch (OperationCanceledException) { }
         }

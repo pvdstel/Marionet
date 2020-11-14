@@ -16,8 +16,8 @@ namespace Marionet.App.SignalR
         where T : new()
     {
         private readonly HubConnection connection;
-        private Uri uri;
-        private ILogger<SignalRClient<T>> logger;
+        private readonly Uri uri;
+        private readonly ILogger<SignalRClient<T>> logger;
         private bool retry = false;
 
         public SignalRClient(Uri uri, ILogger<SignalRClient<T>> logger)
@@ -48,7 +48,7 @@ namespace Marionet.App.SignalR
                         {
                             if (message is HttpClientHandler clientHandler)
                             {
-                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => Certificate.IsParent(Certificate.ServerCertificate, certificate);
+                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => certificate != null && Certificate.IsParent(Certificate.ServerCertificate, certificate);
                                 clientHandler.ClientCertificates.Add(Certificate.ClientCertificate);
                             }
                             return message;
@@ -99,7 +99,7 @@ namespace Marionet.App.SignalR
                 catch (HttpRequestException)
                 {
                     logger.LogWarning($"Connection to {uri} failed. Waiting {cooldown} ms before retrying");
-                    await Task.Delay(cooldown);
+                    await Task.Delay(cooldown, cancellationToken);
                     cooldown = Math.Min(60000, cooldown * 2);
                 }
                 catch (OperationCanceledException)

@@ -39,7 +39,7 @@ namespace Marionet.Core.Windows
                         Native.MouseChannelMessage message = await mouseChannelReader.ReadAsync(cancellationToken);
                         ProcessMessage(message);
                     }
-                });
+                }, cancellationToken);
             }
             catch (OperationCanceledException) { }
         }

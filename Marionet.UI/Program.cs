@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Logging.Serilog;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using Marionet.App;
@@ -69,7 +68,6 @@ namespace Marionet.UI
 
         public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<UIApp>()
             .UsePlatformDetect()
-            .LogToDebug()
             .UseReactiveUI();
 
         private static void ShowMainWindow()

@@ -16,8 +16,6 @@ namespace Marionet.App
 {
     public class Startup
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Called by the ASP.NET Core runtime.")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "Called by the ASP.NET Core runtime.")]
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAuthentication(CertificateMatchAuthenticationDefaults.AuthenticationScheme).AddCertificateMatch(options =>
@@ -43,7 +41,6 @@ namespace Marionet.App
             services.AddSingleton<Workspace>();
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Called by the ASP.NET Core runtime.")]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (app == null)
@@ -72,9 +69,9 @@ namespace Marionet.App
                 });
             });
 
-            app.ApplicationServices.GetService<Supervisor>().StartMonitoring();
-            app.ApplicationServices.GetService<Workspace>().Initialize().Wait();
-            app.ApplicationServices.GetService<WorkspaceClientManager>().Start();
+            app.ApplicationServices.GetService<Supervisor>()!.StartMonitoring();
+            app.ApplicationServices.GetService<Workspace>()!.Initialize().Wait();
+            app.ApplicationServices.GetService<WorkspaceClientManager>()!.Start();
         }
     }
 }

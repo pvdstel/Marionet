@@ -1,5 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Marionet.UI.ViewModels;
 using System;
@@ -8,7 +7,7 @@ namespace Marionet.UI.Views
 {
     public class MainWindow : Window, IDisposable
     {
-        MainWindowViewModel vm = new MainWindowViewModel();
+        private readonly MainWindowViewModel vm = new MainWindowViewModel();
 
         public MainWindow()
         {
@@ -25,9 +24,6 @@ namespace Marionet.UI.Views
                     Hide();
                 }
             };
-#if DEBUG
-            this.AttachDevTools();
-#endif
         }
 
         private void OnViewModelExitTriggered(object? sender, EventArgs e)

@@ -9,9 +9,9 @@ namespace Marionet.Core.Windows
     public class WindowsInputManager : IInputManager, IInputBlocking
     {
         private readonly ApplicationManager applicationManager;
-        private readonly Channel<Native.MouseChannelMessage> mouseInputChannel;
-        private readonly Channel<Native.KeyboardChannelMessage> keyboardInputChannel;
-        private readonly Channel<Native.DisplayChannelMessage> displayInputChannel;
+        internal readonly Channel<Native.MouseChannelMessage> mouseInputChannel;
+        internal readonly Channel<Native.KeyboardChannelMessage> keyboardInputChannel;
+        internal readonly Channel<Native.DisplayChannelMessage> displayInputChannel;
         private CancellationTokenSource? cancellationTokenSource;
 
         private readonly WindowsMouseListener mouseListener;
@@ -26,7 +26,7 @@ namespace Marionet.Core.Windows
             keyboardInputChannel = Channel.CreateUnbounded<Native.KeyboardChannelMessage>(new UnboundedChannelOptions() { SingleReader = true, SingleWriter = true });
             displayInputChannel = Channel.CreateUnbounded<Native.DisplayChannelMessage>(new UnboundedChannelOptions() { SingleReader = true, SingleWriter = true });
 
-            applicationManager = new ApplicationManager(mouseInputChannel.Writer, keyboardInputChannel.Writer, displayInputChannel.Writer, this, OnSystemEvent);
+            applicationManager = new ApplicationManager(this, OnSystemEvent);
             mouseListener = new WindowsMouseListener(mouseInputChannel.Reader, this);
             keyboardListener = new WindowsKeyboardListener(keyboardInputChannel.Reader);
             displayAdapter = new WindowsDisplayAdapter(displayInputChannel.Reader);
@@ -65,16 +65,16 @@ namespace Marionet.Core.Windows
             return Task.CompletedTask;
         }
 
-        public void BlockInput(bool blocked)
+        public async Task BlockInput(bool blocked)
         {
             IsInputBlocked = blocked;
             if (blocked)
             {
-                applicationManager.ShowBlockingWindow();
+                await applicationManager.ShowBlockingWindow();
             }
             else
             {
-                applicationManager.HideBlockingWindow();
+                await applicationManager.HideBlockingWindow();
             }
         }
 

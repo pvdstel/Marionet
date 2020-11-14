@@ -60,7 +60,8 @@ namespace Marionet.App.Core
         public async Task<IClientDesktop> GetClientDesktops(IEnumerable<string> desktopNames)
         {
             var connectionIds = await Task.WhenAll(desktopNames.Select(d => clientIdentifierService.GetConnectionId(d)));
-            return netHub.Clients.Clients(connectionIds.ToList().AsReadOnly());
+            List<string> nonNullConnectionIds = connectionIds.Where(d => d != null).ToList()!;
+            return netHub.Clients.Clients(nonNullConnectionIds.AsReadOnly());
         }
 
         internal void ConnectClient(string desktopName) => ClientConnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));

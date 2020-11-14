@@ -72,11 +72,9 @@ namespace Marionet.App.Configuration
             {
                 File.WriteAllText(ConfigurationFile, JsonSerializer.Serialize(Instance, jsonSerializerOptions));
             }
-            Instance = JsonSerializer.Deserialize<Config>(File.ReadAllText(ConfigurationFile), jsonSerializerOptions);
+            Instance = JsonSerializer.Deserialize<Config>(File.ReadAllText(ConfigurationFile), jsonSerializerOptions) ?? new Config();
             storageLock.Release();
         }
-
-        private Config() { }
 
         public static Config Instance { get; private set; } = new Config();
 

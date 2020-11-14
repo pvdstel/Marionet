@@ -31,7 +31,7 @@ namespace Marionet.App.Communication
             return base.OnConnectedAsync();
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
             string? desktopName = await clientIdentifierService.GetDesktopName(Context.ConnectionId);
             if (desktopName != null)

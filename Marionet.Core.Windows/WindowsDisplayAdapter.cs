@@ -1,4 +1,5 @@
-﻿using Marionet.Core.Input;
+﻿using Avalonia.Win32;
+using Marionet.Core.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,8 @@ namespace Marionet.Core.Windows
     internal class WindowsDisplayAdapter : IDisplayAdapter
     {
         internal const int DisplayChangeProcessingDelay = 1000;
-        private ChannelReader<Native.DisplayChannelMessage> displayChannelReader;
+        private readonly ChannelReader<Native.DisplayChannelMessage> displayChannelReader;
+        private readonly ScreenImpl screenImpl = new ScreenImpl();
 
         public WindowsDisplayAdapter(ChannelReader<Native.DisplayChannelMessage> displayChannelReader)
         {
@@ -22,12 +24,12 @@ namespace Marionet.Core.Windows
 
         public List<Rectangle> GetDisplays()
         {
-            return System.Windows.Forms.Screen.AllScreens.Select(s => new Rectangle(s.Bounds.X, s.Bounds.Y, s.Bounds.Width, s.Bounds.Height)).ToList();
+            return screenImpl.AllScreens.Select(s => new Rectangle(s.Bounds.X, s.Bounds.Y, s.Bounds.Width, s.Bounds.Height)).ToList();
         }
 
         public Rectangle GetPrimaryDisplay()
         {
-            var bounds = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
+            var bounds = screenImpl.AllScreens.First(s => s.Primary).Bounds;
             return new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         }
 
@@ -39,18 +41,18 @@ namespace Marionet.Core.Windows
                 {
                     while (await displayChannelReader.WaitToReadAsync(cancellationToken))
                     {
-                        Native.DisplayChannelMessage message = await displayChannelReader.ReadAsync(cancellationToken);
+                        _ = await displayChannelReader.ReadAsync(cancellationToken);
                         await Task.Delay(DisplayChangeProcessingDelay, cancellationToken);
-                        ProcessMessage(message);
+                        ProcessMessage();
                     }
-                });
+                }, cancellationToken);
             }
             catch (OperationCanceledException) { }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReviewUnusedParameters", "CA1801:Remove unused parameter", Justification = "The message is not necessary.")]
-        private void ProcessMessage(Native.DisplayChannelMessage message)
+        private void ProcessMessage()
         {
+            screenImpl.InvalidateScreensCache();
             DisplaysChanged?.Invoke(this, new DisplaysChangedEventArgs(GetDisplays(), GetPrimaryDisplay()));
         }
     }

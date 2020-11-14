@@ -190,7 +190,7 @@ namespace Marionet.Core
                         if (!isSticky)
                         {
                             DebugMessage("blocking local input");
-                            inputManager.BlockInput(true);
+                            await inputManager.BlockInput(true);
                             localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
                             DebugMessage($"assuming control of {nextDesktop.Name} on display {nextDisplay} on position {nextGlobalPoint}");
                             localState = new LocalState.Controlling(nextDesktop, nextDisplay, nextGlobalPoint);
@@ -261,7 +261,7 @@ namespace Marionet.Core
                             await inputManager.MouseController.MoveMouse(localPoint);
                             await Task.Yield();
                             DebugMessage("unblocking local input");
-                            inputManager.BlockInput(false);
+                            await inputManager.BlockInput(false);
                             localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay!.Value);
                         }
                         else
@@ -322,7 +322,7 @@ namespace Marionet.Core
                     DebugMessage("resigning from control");
                     await controllers.ResignFromControl();
                     DebugMessage("blocking local input");
-                    inputManager.BlockInput(true);
+                    await inputManager.BlockInput(true);
                     localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
                     DebugMessage($"assuming control of {nextDesktop.Name} on display {nextDisplay} on position {nextGlobalPoint}");
                     localState = new LocalState.Controlling(nextDesktop, nextDisplay, nextGlobalPoint);

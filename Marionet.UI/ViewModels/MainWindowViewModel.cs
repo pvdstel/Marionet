@@ -161,7 +161,7 @@ namespace Marionet.UI.ViewModels
 
         public ReactiveCommand<Unit, Unit> ExitApplicationCommand { get; }
 
-        private List<PeerStatus> GetPeerStatuses() =>
+        private static List<PeerStatus> GetPeerStatuses() =>
             Supervisor.PeerStatuses.Select(kvp => new PeerStatus(
                 kvp.Key,
                 kvp.Value.HasFlag(Supervisor.PeerConnectionStatuses.IsClient),
