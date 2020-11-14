@@ -87,10 +87,15 @@ namespace Marionet.Core
             await mutableStateLock.WaitAsync();
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             string? activeDisplayId = null;
             if (controlling != null)
             {
                 activeDisplayId = displayLayout.DisplayIds[controlling.ActiveDisplay];
+            }
+            else if (uncontrolled != null)
+            {
+                activeDisplayId = displayLayout.DisplayIds[uncontrolled.ActiveDisplay];
             }
 
             DebugMessage("recreating display layout");
@@ -104,6 +109,12 @@ namespace Marionet.Core
                 var displayOriginDeltaX = nextDisplay.X - controlling.ActiveDisplay.X;
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
+            }
+            else if (uncontrolled != null && activeDisplayId != null)
+            {
+                var nextDisplay = displayLayout.DisplayById[activeDisplayId];
+                localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay.GetValueOrDefault());
+                DebugMessage($"detected a global desktop change, but state is uncontrolled; updating desktop to {nextDisplay}");
             }
 
             mutableStateLock.Release();
@@ -120,10 +131,15 @@ namespace Marionet.Core
             if (desktop != null)
             {
                 LocalState.Controlling? controlling = localState as LocalState.Controlling;
+                LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
                 string? activeDisplayId = null;
                 if (controlling != null)
                 {
                     activeDisplayId = displayLayout.DisplayIds[controlling.ActiveDisplay];
+                }
+                else if (uncontrolled != null)
+                {
+                    activeDisplayId = displayLayout.DisplayIds[uncontrolled.ActiveDisplay];
                 }
 
                 DebugMessage($"displays for {desktopName} changed");
@@ -145,6 +161,12 @@ namespace Marionet.Core
                         DebugMessage($"display {activeDisplayId} not found. Returning to local primary display");
                         await ReturnToPrimaryDisplay();
                     }
+                }
+                else if (uncontrolled != null && activeDisplayId != null)
+                {
+                    var nextDisplay = displayLayout.DisplayById[activeDisplayId];
+                    localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay.GetValueOrDefault());
+                    DebugMessage($"received a client display change, but state is uncontrolled; updating desktop to {nextDisplay}");
                 }
             }
 
