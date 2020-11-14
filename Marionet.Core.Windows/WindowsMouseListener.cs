@@ -1,5 +1,6 @@
 ﻿using Marionet.Core.Input;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -10,12 +11,16 @@ namespace Marionet.Core.Windows
     {
         private readonly ChannelReader<Native.MouseChannelMessage> mouseChannelReader;
         private readonly IInputBlocking inputBlocking;
+        private readonly HashSet<MouseButton> pressedButtons = new HashSet<MouseButton>();
+
 
         public WindowsMouseListener(ChannelReader<Native.MouseChannelMessage> mouseChannelReader, IInputBlocking inputBlocking)
         {
             this.mouseChannelReader = mouseChannelReader;
             this.inputBlocking = inputBlocking;
         }
+
+        public bool IsAnyButtonPressed => pressedButtons.Count > 0;
 
         public event EventHandler<MouseButtonActionEventArgs>? MouseButtonPressed;
         public event EventHandler<MouseButtonActionEventArgs>? MouseButtonReleased;
@@ -55,21 +60,27 @@ namespace Marionet.Core.Windows
             {
                 case Native.LowLevelMouseProc_wParam.WM_LBUTTONDOWN:
                     MouseButtonPressed?.Invoke(this, new MouseButtonActionEventArgs(MouseButton.Left));
+                    pressedButtons.Add(MouseButton.Left);
                     break;
                 case Native.LowLevelMouseProc_wParam.WM_LBUTTONUP:
                     MouseButtonReleased?.Invoke(this, new MouseButtonActionEventArgs(MouseButton.Left));
+                    pressedButtons.Remove(MouseButton.Left);
                     break;
                 case Native.LowLevelMouseProc_wParam.WM_MBUTTONDOWN:
                     MouseButtonPressed?.Invoke(this, new MouseButtonActionEventArgs(MouseButton.Middle));
+                    pressedButtons.Add(MouseButton.Middle);
                     break;
                 case Native.LowLevelMouseProc_wParam.WM_MBUTTONUP:
                     MouseButtonReleased?.Invoke(this, new MouseButtonActionEventArgs(MouseButton.Middle));
+                    pressedButtons.Remove(MouseButton.Middle);
                     break;
                 case Native.LowLevelMouseProc_wParam.WM_RBUTTONDOWN:
                     MouseButtonPressed?.Invoke(this, new MouseButtonActionEventArgs(MouseButton.Right));
+                    pressedButtons.Add(MouseButton.Right);
                     break;
                 case Native.LowLevelMouseProc_wParam.WM_RBUTTONUP:
                     MouseButtonReleased?.Invoke(this, new MouseButtonActionEventArgs(MouseButton.Right));
+                    pressedButtons.Remove(MouseButton.Right);
                     break;
                 case Native.LowLevelMouseProc_wParam.WM_MOUSEMOVE:
                     MouseMoved?.Invoke(this, new MouseMoveEventArgs(new Point(message.lParam.pt.x, message.lParam.pt.y), inputBlocking.IsInputBlocked));
@@ -102,14 +113,20 @@ namespace Marionet.Core.Windows
                         break;
                     }
 
-                    EventHandler<MouseButtonActionEventArgs>? eventHandler = message.wParam switch
+                    if (message.wParam == Native.LowLevelMouseProc_wParam.WM_XBUTTONDOWN)
                     {
-                        Native.LowLevelMouseProc_wParam.WM_XBUTTONDOWN => MouseButtonPressed,
-                        Native.LowLevelMouseProc_wParam.WM_XBUTTONUP => MouseButtonReleased,
-                        _ => throw new NotImplementedException("This error should never occur."),
-                    };
+                        MouseButtonPressed?.Invoke(this, new MouseButtonActionEventArgs(button));
+                        pressedButtons.Add(button);
+                    }
+                    else if (message.wParam == Native.LowLevelMouseProc_wParam.WM_XBUTTONUP) {
+                        MouseButtonReleased?.Invoke(this, new MouseButtonActionEventArgs(button));
+                        pressedButtons.Remove(button);
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("This error should never occur.");
+                    }
 
-                    eventHandler?.Invoke(this, new MouseButtonActionEventArgs(button));
 
                     break;
             }

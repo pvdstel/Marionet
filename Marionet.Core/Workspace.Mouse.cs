@@ -1,4 +1,4 @@
-﻿using Marionet.Core.Communication;
+using Marionet.Core.Communication;
 using Marionet.Core.Input;
 using System;
 using System.Linq;
@@ -17,6 +17,20 @@ namespace Marionet.Core
             {
                 int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, currentPosition.X));
                 int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, currentPosition.Y));
+                return (true, new Point(x, y));
+            }
+
+            return (false, null);
+        }
+
+        private (bool isKeyButtonBlocked, Point? newPosition) GetKeyButtonBlockPosition(Point nextPosition, Rectangle currentDisplay)
+        {
+            bool checkEnabled = configurationProvider.GetBlockTransferWhenButtonPressed();
+
+            if (checkEnabled && (inputManager.KeyboardListener.IsAnyButtonPressed || inputManager.MouseListener.IsAnyButtonPressed))
+            {
+                int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, nextPosition.X));
+                int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, nextPosition.Y));
                 return (true, new Point(x, y));
             }
 
@@ -186,8 +200,9 @@ namespace Marionet.Core
                     if (nextDesktop != selfDesktop)
                     {
                         var (isSticky, _) = GetStickyPosition(nextGlobalPoint, nextGlobalPoint, uncontrolled.ActiveDisplay);
+                        var (isKeyButtonBlocked, _) = GetKeyButtonBlockPosition(nextGlobalPoint, uncontrolled.ActiveDisplay);
 
-                        if (!isSticky)
+                        if (!isSticky && !isKeyButtonBlocked)
                         {
                             DebugMessage("blocking local input");
                             await inputManager.BlockInput(true);
@@ -229,6 +244,7 @@ namespace Marionet.Core
                 if (next.HasValue)
                 {
                     var (isSticky, stickyPoint) = GetStickyPosition(controlling.CursorPosition, nextGlobalPoint, controlling.ActiveDisplay);
+
                     Desktop nextDesktop;
                     Rectangle nextDisplay;
 
@@ -248,31 +264,46 @@ namespace Marionet.Core
 
                     if (nextDesktop != controlling.ActiveDesktop)
                     {
-                        DebugMessage($"relinquishing {controlling.ActiveDesktop}");
-                        if (client != null)
+                        var (isKeyButtonBlocked, keyButtonBlockedPoint) = GetKeyButtonBlockPosition(nextGlobalPoint, controlling.ActiveDisplay);
+
+                        if (isKeyButtonBlocked)
                         {
-                            await client.RelinquishControl();
-                        }
-                        if (nextDesktop == selfDesktop)
-                        {
-                            DebugMessage($"moving to local display {nextDisplay}");
-                            var localPoint = TranslateGlobalToLocal(nextGlobalPoint);
-                            DebugMessage($"placing cursor at {localPoint} (global {nextGlobalPoint}");
-                            await inputManager.MouseController.MoveMouse(localPoint);
-                            await Task.Yield();
-                            DebugMessage("unblocking local input");
-                            await inputManager.BlockInput(false);
-                            localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay!.Value);
+                            // keyButtonBlockedPoint is guaranteed to have a value
+                            DebugMessage($"moving to display {nextDisplay} on same desktop {nextDesktop} [blocked: button down]");
+                            localState = new LocalState.Controlling(controlling.ActiveDesktop, controlling.ActiveDisplay, keyButtonBlockedPoint!.Value);
+                            if (client != null)
+                            {
+                                await client.MoveMouse(keyButtonBlockedPoint!.Value);
+                            }
                         }
                         else
                         {
-                            localState = new LocalState.Controlling(nextDesktop, nextDisplay, nextGlobalPoint);
-                            DebugMessage($"assuming control of {nextDesktop.Name}");
-                            var nextClient = await workspaceNetwork.GetClientDesktop(nextDesktop.Name);
-                            if (nextClient != null)
+                            DebugMessage($"relinquishing {controlling.ActiveDesktop}");
+                            if (client != null)
                             {
-                                await nextClient.AssumeControl();
-                                await nextClient.MoveMouse(nextGlobalPoint);
+                                await client.RelinquishControl();
+                            }
+                            if (nextDesktop == selfDesktop)
+                            {
+                                DebugMessage($"moving to local display {nextDisplay}");
+                                var localPoint = TranslateGlobalToLocal(nextGlobalPoint);
+                                DebugMessage($"placing cursor at {localPoint} (global {nextGlobalPoint}");
+                                await inputManager.MouseController.MoveMouse(localPoint);
+                                await Task.Yield();
+                                DebugMessage("unblocking local input");
+                                await inputManager.BlockInput(false);
+                                localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay!.Value);
+                            }
+                            else
+                            {
+                                localState = new LocalState.Controlling(nextDesktop, nextDisplay, nextGlobalPoint);
+                                DebugMessage($"assuming control of {nextDesktop.Name}");
+                                var nextClient = await workspaceNetwork.GetClientDesktop(nextDesktop.Name);
+                                if (nextClient != null)
+                                {
+                                    await nextClient.AssumeControl();
+                                    await nextClient.MoveMouse(nextGlobalPoint);
+                                }
                             }
                         }
                     }
@@ -289,7 +320,7 @@ namespace Marionet.Core
                 else
                 {
                     var clampedNextGlobalPoint = controlling.ActiveDisplay.Clamp(nextGlobalPoint);
-                    DebugMessage($"moving to {clampedNextGlobalPoint} on {controlling.ActiveDesktop}");
+                    DebugMessage($"moving to {clampedNextGlobalPoint} on {controlling.ActiveDesktop} [clamped]");
                     controlling.CursorPosition = clampedNextGlobalPoint;
                     if (client != null)
                     {

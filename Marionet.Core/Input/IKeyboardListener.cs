@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Marionet.Core.Input
 {
-    public interface IKeyboardListener
+    public interface IKeyboardListener : IInputListener
     {
         event EventHandler<KeyboardButtonActionEventArgs> KeyboardButtonPressed;
 

@@ -86,6 +86,8 @@ namespace Marionet.App.Configuration
 
         public int StickyCornerSize { get; set; } = 6;
 
+        public bool BlockTransferWhenButtonPressed { get; set; } = true;
+
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Used for serialization.")]
         public List<string> Desktops { get; set; } = new List<string>() { Environment.MachineName };

@@ -9,5 +9,7 @@ namespace Marionet.Core
         List<string> GetDesktopOrder();
 
         int GetStickyCornerSize();
+
+        bool GetBlockTransferWhenButtonPressed();
     }
 }
