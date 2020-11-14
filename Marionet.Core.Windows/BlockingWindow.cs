@@ -83,7 +83,7 @@ namespace Marionet.Core.Windows
             base.OnClosing(e);
         }
 
-        public override void Show()
+        public new void Show()
         {
             base.Show();
             RefreshWindowRect(true);
@@ -93,7 +93,7 @@ namespace Marionet.Core.Windows
             _ = Native.Methods.ShowCursor(false);
         }
 
-        public override void Hide()
+        public new void Hide()
         {
             base.Hide();
             Debug.WriteLine(nameof(BlockingWindow) + ": incrementing cursor visibility");
