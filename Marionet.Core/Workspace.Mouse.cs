@@ -1,4 +1,4 @@
-using Marionet.Core.Communication;
+﻿using Marionet.Core.Communication;
 using Marionet.Core.Input;
 using System;
 using System.Linq;
@@ -15,8 +15,8 @@ namespace Marionet.Core
 
             if (stickyCornerSize > 0 && (averageY < currentDisplay.Top + stickyCornerSize || averageY > currentDisplay.Bottom - stickyCornerSize))
             {
-                int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, currentPosition.X));
-                int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, currentPosition.Y));
+                int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, nextPosition.X));
+                int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, nextPosition.Y));
                 return (true, new Point(x, y));
             }
 
