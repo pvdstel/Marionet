@@ -192,7 +192,7 @@ namespace Marionet.Core
             mouseDeltaDebounceValueY = e.PrimaryDisplay.Height / 2;
             displayLayout = new DisplayLayout(desktops);
             var allClients = await workspaceNetwork.GetAllClientDesktops();
-            await allClients.DisplaysChanged(e.Displays);
+            await allClients.DisplaysChanged(new List<Rectangle>(e.Displays));
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)

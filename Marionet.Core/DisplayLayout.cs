@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Marionet.Core
 {
-    internal class DisplayLayout
+    public class DisplayLayout
     {
         private readonly List<Rectangle> displayRectangles = new List<Rectangle>();
         private readonly Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
@@ -14,6 +15,8 @@ namespace Marionet.Core
 
         public DisplayLayout(IEnumerable<Desktop> desktops)
         {
+            if (desktops == null) throw new ArgumentNullException(nameof(desktops));
+
             Initialize(desktops);
         }
 
@@ -64,7 +67,7 @@ namespace Marionet.Core
                 foreach (Rectangle display in desktop.Displays)
                 {
                     var displayId = $"{desktop}--${display}";
-                    Rectangle rect = display.Offset(offset + desktopLeftOffset, 0);
+                    Rectangle rect = display.Offset(desktopOrigin.X, 0);
                     displayRectangles.Add(rect);
                     displayDesktops.Add(rect, desktop);
                     displayIds.Add(rect, displayId);
