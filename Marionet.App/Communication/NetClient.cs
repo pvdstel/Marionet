@@ -142,7 +142,13 @@ namespace Marionet.App.Communication
         {
             if (await WaitForName())
             {
-                workspaceNetwork.ChangeDisplays(serverName!, displays);
+                if (displays == null)
+                {
+                    logger.LogError($"Received a null list of displays from server {serverName}");
+                    return;
+                }
+
+                workspaceNetwork.ChangeDisplays(serverName!, displays.AsReadOnly());
             }
         }
 

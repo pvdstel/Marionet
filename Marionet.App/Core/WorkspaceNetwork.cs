@@ -4,6 +4,7 @@ using Marionet.Core.Communication;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,7 +67,7 @@ namespace Marionet.App.Core
 
         internal void ConnectClient(string desktopName) => ClientConnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void DisconnectClient(string desktopName) => ClientDisconnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
-        internal void ChangeDisplays(string desktopName, List<Rectangle> displays) => ClientDisplaysChanged?.Invoke(this, new ClientDisplaysChangedEventArgs(desktopName, displays));
+        internal void ChangeDisplays(string desktopName, ReadOnlyCollection<Rectangle> displays) => ClientDisplaysChanged?.Invoke(this, new ClientDisplaysChangedEventArgs(desktopName, displays));
         internal void AssumeControl(string desktopName) => ControlAssumed?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void RelinquishControl(string desktopName) => ControlRelinquished?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void ResignFromControl(string desktopName) => ClientResignedFromControl?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));

@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Marionet.Core.Input
 {
     public interface IDisplayAdapter
     {
-        List<Rectangle> GetDisplays();
+        ReadOnlyCollection<Rectangle> GetDisplays();
 
         Rectangle GetPrimaryDisplay();
 

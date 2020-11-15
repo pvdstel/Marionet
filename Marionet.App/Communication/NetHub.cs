@@ -66,9 +66,15 @@ namespace Marionet.App.Communication
         public async Task ChangeDisplays(List<Rectangle> displays)
         {
             string? desktopName = await clientIdentifierService.GetDesktopName(Context.ConnectionId);
+            if (displays == null)
+            {
+                logger.LogError($"Received a null list of displays from client {desktopName}");
+                return;
+            }
+
             if (desktopName != null)
             {
-                workspaceNetwork.ChangeDisplays(desktopName, displays);
+                workspaceNetwork.ChangeDisplays(desktopName, displays.AsReadOnly());
             }
         }
     }

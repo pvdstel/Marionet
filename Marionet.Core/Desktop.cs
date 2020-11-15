@@ -1,20 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Marionet.Core
 {
-    public class Desktop
+    public record Desktop(string Name, ReadOnlyCollection<Rectangle> Displays, Rectangle? PrimaryDisplay)
     {
-        public string Name { get; set; } = string.Empty;
-
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Should be replaceable.")]
-        public List<Rectangle> Displays { get; set; } = new List<Rectangle>();
-
-        public Rectangle? PrimaryDisplay { get; set; }
+        public Desktop(string Name) : this(Name, new List<Rectangle>().AsReadOnly(), null) { }
 
         public override string ToString()
         {
-            return $"Desktop({Name})";
+            return Name;
         }
     }
 }

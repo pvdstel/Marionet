@@ -72,14 +72,15 @@ namespace Marionet.Core
             localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
 
             await mutableStateLock.WaitAsync();
-            selfDesktop = new Desktop() { Name = selfName, Displays = inputManager.DisplayAdapter.GetDisplays(), PrimaryDisplay = inputManager.DisplayAdapter.GetPrimaryDisplay() };
-            mouseDeltaDebounceValueX = selfDesktop.PrimaryDisplay.Value.Width / 3;
-            mouseDeltaDebounceValueY = selfDesktop.PrimaryDisplay.Value.Height / 3;
+            var primaryDisplay = inputManager.DisplayAdapter.GetPrimaryDisplay();
+            selfDesktop = new Desktop(selfName, inputManager.DisplayAdapter.GetDisplays(), primaryDisplay);
+            mouseDeltaDebounceValueX = primaryDisplay.Width / 3;
+            mouseDeltaDebounceValueY = primaryDisplay.Height / 3;
             desktops = new List<Desktop>() { selfDesktop };
             displayLayout = new DisplayLayout(desktops);
 
             var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
-            localState = new LocalState.Uncontrolled(display, selfDesktop.PrimaryDisplay.Value);
+            localState = new LocalState.Uncontrolled(display, primaryDisplay);
             mutableStateLock.Release();
 
             initialized.TrySetResult(null);

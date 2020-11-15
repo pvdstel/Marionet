@@ -1,7 +1,7 @@
 ﻿using Avalonia.Win32;
 using Marionet.Core.Input;
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -22,9 +22,9 @@ namespace Marionet.Core.Windows
 
         public event EventHandler<DisplaysChangedEventArgs>? DisplaysChanged;
 
-        public List<Rectangle> GetDisplays()
+        public ReadOnlyCollection<Rectangle> GetDisplays()
         {
-            return screenImpl.AllScreens.Select(s => new Rectangle(s.Bounds.X, s.Bounds.Y, s.Bounds.Width, s.Bounds.Height)).ToList();
+            return screenImpl.AllScreens.Select(s => new Rectangle(s.Bounds.X, s.Bounds.Y, s.Bounds.Width, s.Bounds.Height)).ToList().AsReadOnly();
         }
 
         public Rectangle GetPrimaryDisplay()

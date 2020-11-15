@@ -28,7 +28,7 @@ namespace Marionet.Core
             }
 
             DebugMessage($"adding client {desktopName}");
-            desktops.Add(new Desktop() { Name = desktopName });
+            desktops.Add(new Desktop(desktopName, new List<Rectangle>().AsReadOnly(), null));
             displayLayout = CreateDisplayLayout(configurationProvider.GetDesktopOrder());
             DebugPrintDisplays();
 
@@ -127,8 +127,8 @@ namespace Marionet.Core
             await mutableStateLock.WaitAsync();
 
             var desktopName = e.DesktopName.NormalizeDesktopName();
-            var desktop = desktops.Find(d => d.Name == desktopName);
-            if (desktop != null)
+            var desktopIndex = desktops.FindIndex(d => d.Name == desktopName);
+            if (desktopIndex >= 0)
             {
                 LocalState.Controlling? controlling = localState as LocalState.Controlling;
                 LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
@@ -143,7 +143,8 @@ namespace Marionet.Core
                 }
 
                 DebugMessage($"displays for {desktopName} changed");
-                desktop.Displays = e.Displays;
+                var oldDesktop = desktops[desktopIndex];
+                desktops[desktopIndex] = oldDesktop with { Displays = e.Displays };
                 displayLayout = new DisplayLayout(desktops);
                 DebugPrintDisplays();
 
@@ -186,8 +187,7 @@ namespace Marionet.Core
             }
 
             DebugMessage("own displays changed");
-            selfDesktop.Displays = e.Displays;
-            selfDesktop.PrimaryDisplay = e.PrimaryDisplay;
+            selfDesktop = selfDesktop with { Displays = e.Displays, PrimaryDisplay = e.PrimaryDisplay };
             mouseDeltaDebounceValueX = e.PrimaryDisplay.Width / 2;
             mouseDeltaDebounceValueY = e.PrimaryDisplay.Height / 2;
             displayLayout = new DisplayLayout(desktops);

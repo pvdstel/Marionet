@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Marionet.Core.Input
 {
     public class DisplaysChangedEventArgs : EventArgs
     {
-        public DisplaysChangedEventArgs(List<Rectangle> displays, Rectangle primaryDisplay)
+        public DisplaysChangedEventArgs(ReadOnlyCollection<Rectangle> displays, Rectangle primaryDisplay)
         {
             Displays = displays;
             PrimaryDisplay = primaryDisplay;
         }
 
-        public List<Rectangle> Displays { get; }
+        public ReadOnlyCollection<Rectangle> Displays { get; }
 
         public Rectangle PrimaryDisplay { get; }
     }
