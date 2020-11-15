@@ -280,7 +280,7 @@ namespace Marionet.Core
 
                         if (keyButtonBlockPoint.HasValue)
                         {
-                            DebugMessage($"moving to display {nextDisplay} on same desktop {nextDesktop} [blocked: button down]");
+                            DebugMessage($"moving to display {keyButtonBlockPoint} on same desktop {nextDesktop} [blocked: button down]");
                             localState = new LocalState.Controlling(controlling.ActiveDesktop, controlling.ActiveDisplay, keyButtonBlockPoint.Value);
                             if (client != null)
                             {
