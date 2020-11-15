@@ -71,7 +71,7 @@ namespace Marionet.Core
                     displayById.Add(displayId, rect);
                 }
 
-                offset = offset + desktopWidth;
+                offset += desktopWidth;
             }
         }
     }
