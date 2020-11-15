@@ -84,28 +84,30 @@ namespace Marionet.App.SignalR
             retry = true;
             int cooldown = 1000;
             ConnectingStarted?.Invoke(this, new EventArgs());
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    cancellationToken.Register(CancelConnection);
-                    logger.LogInformation($"Connecting to {uri}...");
-                    await connection.StartAsync(cancellationToken);
-                    logger.LogInformation($"Connected to {uri}");
-                    Connected?.Invoke(this, new EventArgs());
-                    return;
-                }
-                catch (HttpRequestException)
-                {
-                    logger.LogWarning($"Connection to {uri} failed. Waiting {cooldown} ms before retrying");
-                    await Task.Delay(cooldown, cancellationToken);
-                    cooldown = Math.Min(60000, cooldown * 2);
+                    try
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        cancellationToken.Register(CancelConnection);
+                        logger.LogInformation($"Connecting to {uri}...");
+                        await connection.StartAsync(cancellationToken);
+                        logger.LogInformation($"Connected to {uri}");
+                        Connected?.Invoke(this, new EventArgs());
+                        return;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        logger.LogWarning($"Connection to {uri} failed. Waiting {cooldown} ms before retrying");
+                        await Task.Delay(cooldown, cancellationToken);
+                        cooldown = Math.Min(60000, cooldown * 2);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
                     logger.LogDebug($"Connection to {uri} aborted");
-                    break;
                 }
             }
         }
