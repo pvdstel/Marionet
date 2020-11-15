@@ -1,11 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>0.3.1</Version>
+    <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <Authors>pvdstel</Authors>
+    <Version>0.3.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -50,7 +50,7 @@ namespace Marionet.Core
             return null;
         }
 
-        private async void OnMouseMoved(object sender, MouseMoveEventArgs e)
+        private async void OnMouseMoved(object? sender, MouseMoveEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -75,7 +75,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnMouseButtonPressed(object sender, MouseButtonActionEventArgs e)
+        private async void OnMouseButtonPressed(object? sender, MouseButtonActionEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -92,7 +92,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnMouseButtonReleased(object sender, MouseButtonActionEventArgs e)
+        private async void OnMouseButtonReleased(object? sender, MouseButtonActionEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -113,7 +113,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnMouseWheel(object sender, MouseWheelEventArgs e)
+        private async void OnMouseWheel(object? sender, MouseWheelEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -134,7 +134,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnMouseMoveReceived(object sender, MouseMoveReceivedEventArgs e)
+        private async void OnMouseMoveReceived(object? sender, MouseMoveReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -147,7 +147,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnControlledMouseMoveReceived(object sender, MouseMoveReceivedEventArgs e)
+        private async void OnControlledMouseMoveReceived(object? sender, MouseMoveReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -156,13 +156,13 @@ namespace Marionet.Core
             if (localState is LocalState.Controlling controlling && controlling.ActiveDesktop.Name == desktopName)
             {
                 DebugMessage($"controlled mouse moved to {e.Position}");
-                controlling.CursorPosition = e.Position;
+                localState = controlling with { CursorPosition = e.Position };
             }
 
             mutableStateLock.Release();
         }
 
-        private async void OnPressMouseButtonReceived(object sender, MouseButtonActionReceivedEventArgs e)
+        private async void OnPressMouseButtonReceived(object? sender, MouseButtonActionReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -175,7 +175,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnReleaseMouseButtonReceived(object sender, MouseButtonActionReceivedEventArgs e)
+        private async void OnReleaseMouseButtonReceived(object? sender, MouseButtonActionReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -188,7 +188,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnMouseWheelReceived(object sender, MouseWheelReceivedEventArgs e)
+        private async void OnMouseWheelReceived(object? sender, MouseWheelReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -332,7 +332,7 @@ namespace Marionet.Core
                 {
                     var clampedNextGlobalPoint = controlling.ActiveDisplay.Clamp(nextGlobalPoint);
                     DebugMessage($"moving to {clampedNextGlobalPoint} on {controlling.ActiveDesktop} [clamped]");
-                    controlling.CursorPosition = clampedNextGlobalPoint;
+                    localState = controlling with { CursorPosition = clampedNextGlobalPoint };
                     if (client != null)
                     {
                         await client.MoveMouse(clampedNextGlobalPoint);
@@ -342,7 +342,7 @@ namespace Marionet.Core
             else
             {
                 DebugMessage($"moving to {nextGlobalPoint} on {controlling.ActiveDesktop}");
-                controlling.CursorPosition = nextGlobalPoint;
+                localState = controlling with { CursorPosition = nextGlobalPoint };
                 if (client != null)
                 {
                     await client.MoveMouse(nextGlobalPoint);

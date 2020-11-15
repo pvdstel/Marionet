@@ -8,7 +8,7 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
-        private async void OnClientConnected(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnClientConnected(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
 
@@ -43,7 +43,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnClientDisconnected(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnClientDisconnected(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -81,7 +81,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnDesktopsChanged(object sender, DesktopsChangedEventArgs e)
+        private async void OnDesktopsChanged(object? sender, DesktopsChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -121,7 +121,7 @@ namespace Marionet.Core
         }
 
 
-        private async void OnClientDisplaysChanged(object sender, ClientDisplaysChangedEventArgs e)
+        private async void OnClientDisplaysChanged(object? sender, ClientDisplaysChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -173,7 +173,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnDisplaysChanged(object sender, DisplaysChangedEventArgs e)
+        private async void OnDisplaysChanged(object? sender, DisplaysChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();

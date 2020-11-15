@@ -16,7 +16,7 @@ namespace Marionet.Core
 
         public Point Offset(int byX, int byY) => new Point(X + byX, Y + byY);
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Point point && Equals(point);
         }

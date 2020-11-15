@@ -85,7 +85,7 @@ namespace Marionet.Core
             initialized.TrySetResult(null);
         }
 
-        private async void OnSystemEvent(object sender, EventArgs e)
+        private async void OnSystemEvent(object? sender, EventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -104,7 +104,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnControlAssumed(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnControlAssumed(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -139,7 +139,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnControlRelinquished(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnControlRelinquished(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -167,7 +167,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnClientResignedFromControl(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnClientResignedFromControl(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();

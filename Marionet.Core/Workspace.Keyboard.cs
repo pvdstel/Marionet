@@ -5,7 +5,7 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
-        private async void OnKeyboardButtonPressed(object sender, KeyboardButtonActionEventArgs e)
+        private async void OnKeyboardButtonPressed(object? sender, KeyboardButtonActionEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -22,7 +22,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnKeyboardButtonReleased(object sender, KeyboardButtonActionEventArgs e)
+        private async void OnKeyboardButtonReleased(object? sender, KeyboardButtonActionEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -44,7 +44,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnPressKeyboardButtonReceived(object sender, KeyboardButtonActionReceivedEventArgs e)
+        private async void OnPressKeyboardButtonReceived(object? sender, KeyboardButtonActionReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -57,7 +57,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnReleaseKeyboardButtonReceived(object sender, KeyboardButtonActionReceivedEventArgs e)
+        private async void OnReleaseKeyboardButtonReceived(object? sender, KeyboardButtonActionReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();

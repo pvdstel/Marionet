@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Marionet.Core.LocalState
 {
-    internal class Controlled : State
-    {
-        public Controlled(HashSet<string> by)
-        {
-            By = by;
-        }
-
-        public HashSet<string> By { get; }
-    }
+    internal record Controlled(HashSet<string> By) : State;
 }

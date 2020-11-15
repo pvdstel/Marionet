@@ -34,7 +34,7 @@ namespace Marionet.Core
 
         public Point Clamp(Point point) => new Point(Math.Max(X, Math.Min(Right - 1, point.X)), Math.Max(Y, Math.Min(Bottom - 1, point.Y)));
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Rectangle rectangle && Equals(rectangle);
         }
