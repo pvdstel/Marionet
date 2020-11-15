@@ -19,6 +19,7 @@ namespace Marionet.App.SignalR
         private readonly Uri uri;
         private readonly ILogger<SignalRClient<T>> logger;
         private bool retry = false;
+        private CancellationToken connectCancellationToken = default;
 
         public SignalRClient(Uri uri, ILogger<SignalRClient<T>> logger)
         {
@@ -59,10 +60,10 @@ namespace Marionet.App.SignalR
             {
                 logger.LogWarning($"Connection to {uri} closed");
                 Disconnected?.Invoke(this, new EventArgs());
-                if (retry)
+                if (retry && !connectCancellationToken.IsCancellationRequested)
                 {
                     logger.LogDebug($"Reconnecting to {uri}...");
-                    await Connect();
+                    await Connect(connectCancellationToken);
                 }
                 else
                 {
@@ -79,9 +80,10 @@ namespace Marionet.App.SignalR
         public event EventHandler? Connected;
         public event EventHandler? Disconnected;
 
-        public async Task Connect(CancellationToken cancellationToken = default)
+        public async Task Connect(CancellationToken cancellationToken)
         {
             retry = true;
+            connectCancellationToken = cancellationToken;
             int cooldown = 1000;
             ConnectingStarted?.Invoke(this, new EventArgs());
             while (!cancellationToken.IsCancellationRequested)
