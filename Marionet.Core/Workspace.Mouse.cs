@@ -8,7 +8,14 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
-        private (bool isSticky, Point? newPosition) GetStickyPosition(Point currentPosition, Point nextPosition, Rectangle currentDisplay)
+        /// <summary>
+        /// If the sticky cursor option is enabled, clamps the cursor to the current display if a sticky corner is hit.
+        /// </summary>
+        /// <param name="currentPosition">The current global cursor position.</param>
+        /// <param name="nextPosition">The next global cursor position.</param>
+        /// <param name="currentDisplay">The current display.</param>
+        /// <returns>An optional point. If it has a value, that is the next cursor position clamped to the current display.</returns>
+        private Point? GetStickyPosition(Point currentPosition, Point nextPosition, Rectangle currentDisplay)
         {
             int averageY = (currentPosition.Y + nextPosition.Y) / 2;
             int stickyCornerSize = configurationProvider.GetStickyCornerSize();
@@ -17,13 +24,19 @@ namespace Marionet.Core
             {
                 int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, nextPosition.X));
                 int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, nextPosition.Y));
-                return (true, new Point(x, y));
+                return new Point(x, y);
             }
 
-            return (false, null);
+            return null;
         }
 
-        private (bool isKeyButtonBlocked, Point? newPosition) GetKeyButtonBlockPosition(Point nextPosition, Rectangle currentDisplay)
+        /// <summary>
+        /// If the block on button down option is enabled, clamps the cursor to the current desktop if a button is pressed.
+        /// </summary>
+        /// <param name="nextPosition">The next global cursor position.</param>
+        /// <param name="currentDisplay">The currently active display.</param>
+        /// <returns>An optional point. If it has a value, that is the next cursor position clamped to the current display.</returns>
+        private Point? GetKeyButtonBlockPosition(Point nextPosition, Rectangle currentDisplay)
         {
             bool checkEnabled = configurationProvider.GetBlockTransferWhenButtonPressed();
 
@@ -31,10 +44,10 @@ namespace Marionet.Core
             {
                 int x = Math.Max(currentDisplay.Left, Math.Min(currentDisplay.Right, nextPosition.X));
                 int y = Math.Max(currentDisplay.Top, Math.Min(currentDisplay.Bottom, nextPosition.Y));
-                return (true, new Point(x, y));
+                return new Point(x, y);
             }
 
-            return (false, null);
+            return null;
         }
 
         private async void OnMouseMoved(object sender, MouseMoveEventArgs e)
@@ -199,10 +212,10 @@ namespace Marionet.Core
                     var (nextDesktop, nextDisplay) = next.Value;
                     if (nextDesktop != selfDesktop)
                     {
-                        var (isSticky, _) = GetStickyPosition(nextGlobalPoint, nextGlobalPoint, uncontrolled.ActiveDisplay);
-                        var (isKeyButtonBlocked, _) = GetKeyButtonBlockPosition(nextGlobalPoint, uncontrolled.ActiveDisplay);
+                        var stickyPosition = GetStickyPosition(nextGlobalPoint, nextGlobalPoint, uncontrolled.ActiveDisplay);
+                        var keyButtonBlockPosition = GetKeyButtonBlockPosition(nextGlobalPoint, uncontrolled.ActiveDisplay);
 
-                        if (!isSticky && !isKeyButtonBlocked)
+                        if (!stickyPosition.HasValue && !keyButtonBlockPosition.HasValue)
                         {
                             DebugMessage("blocking local input");
                             await inputManager.BlockInput(true);
@@ -243,17 +256,16 @@ namespace Marionet.Core
                 var next = displayLayout.FindPoint(nextGlobalPoint);
                 if (next.HasValue)
                 {
-                    var (isSticky, stickyPoint) = GetStickyPosition(controlling.CursorPosition, nextGlobalPoint, controlling.ActiveDisplay);
+                    var stickyPoint = GetStickyPosition(controlling.CursorPosition, nextGlobalPoint, controlling.ActiveDisplay);
 
                     Desktop nextDesktop;
                     Rectangle nextDisplay;
 
-                    DebugMessage($"sticky: {isSticky} @ {stickyPoint}");
+                    DebugMessage($"sticky: {(stickyPoint.HasValue ? stickyPoint.Value.ToString() : "null")}");
 
-                    if (isSticky)
+                    if (stickyPoint.HasValue)
                     {
-                        // stickyPoint is guaranteed to have a value
-                        nextGlobalPoint = stickyPoint!.Value;
+                        nextGlobalPoint = stickyPoint.Value;
                         nextDesktop = controlling.ActiveDesktop;
                         nextDisplay = controlling.ActiveDisplay;
                     }
@@ -264,16 +276,15 @@ namespace Marionet.Core
 
                     if (nextDesktop != controlling.ActiveDesktop)
                     {
-                        var (isKeyButtonBlocked, keyButtonBlockedPoint) = GetKeyButtonBlockPosition(nextGlobalPoint, controlling.ActiveDisplay);
+                        var keyButtonBlockPoint = GetKeyButtonBlockPosition(nextGlobalPoint, controlling.ActiveDisplay);
 
-                        if (isKeyButtonBlocked)
+                        if (keyButtonBlockPoint.HasValue)
                         {
-                            // keyButtonBlockedPoint is guaranteed to have a value
                             DebugMessage($"moving to display {nextDisplay} on same desktop {nextDesktop} [blocked: button down]");
-                            localState = new LocalState.Controlling(controlling.ActiveDesktop, controlling.ActiveDisplay, keyButtonBlockedPoint!.Value);
+                            localState = new LocalState.Controlling(controlling.ActiveDesktop, controlling.ActiveDisplay, keyButtonBlockPoint.Value);
                             if (client != null)
                             {
-                                await client.MoveMouse(keyButtonBlockedPoint!.Value);
+                                await client.MoveMouse(keyButtonBlockPoint!.Value);
                             }
                         }
                         else
