@@ -30,6 +30,8 @@ namespace Marionet.Core
 
         public ReadOnlyDictionary<string, Rectangle> DisplayById => new ReadOnlyDictionary<string, Rectangle>(displayById);
 
+        public static string GetDisplayId(Desktop desktop, Rectangle display) => $"{desktop}--${display}";
+
         public (Desktop desktop, Rectangle display)? FindPoint(Point point)
         {
             Rectangle? rect = null;
@@ -66,7 +68,7 @@ namespace Marionet.Core
 
                 foreach (Rectangle display in desktop.Displays)
                 {
-                    var displayId = $"{desktop}--${display}";
+                    var displayId = GetDisplayId(desktop, display);
                     Rectangle rect = display.Offset(desktopOrigin.X, 0);
                     displayRectangles.Add(rect);
                     displayDesktops.Add(rect, desktop);
