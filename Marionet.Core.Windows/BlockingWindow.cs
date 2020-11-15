@@ -54,7 +54,6 @@ namespace Marionet.Core.Windows
             // Set the cursor in PointerEnter, because the cursor is not hidden otherwise
             void onPointerEnter(object? sender, EventArgs e)
             {
-                Console.WriteLine("Entered");
                 Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.None);
             };
             PointerEnter += onPointerEnter;
