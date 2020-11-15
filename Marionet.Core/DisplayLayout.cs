@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 
 namespace Marionet.Core
 {
     internal class DisplayLayout
     {
-        private List<Rectangle> displayRectangles = new List<Rectangle>();
-        private Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
-        private Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
-        private Dictionary<Rectangle, string> displayIds = new Dictionary<Rectangle, string>();
-        private Dictionary<string, Rectangle> displayById = new Dictionary<string, Rectangle>();
+        private readonly List<Rectangle> displayRectangles = new List<Rectangle>();
+        private readonly Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
+        private readonly Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
+        private readonly Dictionary<Rectangle, string> displayIds = new Dictionary<Rectangle, string>();
+        private readonly Dictionary<string, Rectangle> displayById = new Dictionary<string, Rectangle>();
 
         public DisplayLayout(IEnumerable<Desktop> desktops)
         {
