@@ -15,6 +15,21 @@ It is possible to specify the location in the network using the `desktopAddresse
 
 To ensure that the application only runs in a trusted network, simply specify the run conditions in the `runConditions` field. Here you may specify the known SSIDs on which the application may run, or choose to simply block the application from running.
 
+## Configuring Marionet
+
+Marionet supports the following configuration options, which can be changed in the `config.json` file.
+
+| Name | Type | Description |
+|---|---|---|
+| `serverCertificatePath` | string | The path to the server certificate file. |
+| `clientCertificatePath` | string | The path to the client certificate file. |
+| `self` | string | The name of the current node. Defaults to the machine name. |
+| `stickyCornerSize` | integer | The size (in pixels) of sticky corners. Defaults to 6. |
+| `blockTransferWhenButtonPressed` | boolean | Whether transferring control to another desktop is blocked when a button (keyboard or mouse) is currently being pressed. Defaults to true. |
+| `desktops` | string[] | The list of known desktops. |
+| `desktopAddresses` | object | A map with desktop names as keys and network addresses as values. Can be used to speed up connections. If a desktop is not specified, its name is used. |
+| `runConditions` | object | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (boolean): blocks Marionet from running entirely.</li><li>`allowedSsids` (string[]): a whitelist of SSIDs that Marionet may run on.</li></ul>
+
 ## FAQ
 
 ### Why won't it work on some windows?
