@@ -10,6 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="HostApp.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="HostApp.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.10.0-preview6" />
     <PackageReference Include="Avalonia.Desktop" Version="0.10.0-preview6" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">

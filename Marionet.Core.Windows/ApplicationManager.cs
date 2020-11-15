@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Threading;
 using Marionet.Core.Input;
 using System;
@@ -77,12 +78,12 @@ namespace Marionet.Core.Windows
 
             Thread applicationThread = new Thread(() =>
             {
-                bool madeApplication = Application.Current == null;
-                Debug.WriteLine($"Marionet.Core.Windows.ApplicationManager: Avalonia application not initialized = {madeApplication}");
-                Debug.WriteLineIf(madeApplication, "Creating new application...");
-                if (madeApplication)
+                bool needsNewApplication = Application.Current == null;
+                Debug.WriteLine($"Marionet.Core.Windows.ApplicationManager: Avalonia application not initialized = {needsNewApplication}");
+                Debug.WriteLineIf(needsNewApplication, "Creating new application...");
+                if (needsNewApplication)
                 {
-                    AppBuilder.Configure<Application>().UsePlatformDetect().SetupWithoutStarting();
+                    AppBuilder.Configure<HostApp>().UsePlatformDetect().SetupWithoutStarting();
                 }
 
                 MessageWindow? messageWindow = null;
@@ -124,9 +125,9 @@ namespace Marionet.Core.Windows
 
                 applicationStartCompleted.TrySetResult(null);
 
-                if (madeApplication)
+                if (needsNewApplication)
                 {
-                    Dispatcher.UIThread.MainLoop(cancellation.Token);
+                    Application.Current.Run(cancellationToken);
                 }
             });
             applicationThread.Start();

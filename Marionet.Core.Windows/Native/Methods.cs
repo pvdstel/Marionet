@@ -31,9 +31,6 @@ namespace Marionet.Core.Windows.Native
         [DllImport("user32.dll")]
         public static extern bool UnhookWinEvent(IntPtr hWinEventHook);
 
-        [DllImport("USER32.dll")]
-        public static extern short GetKeyState(VirtualKey nVirtKey);
-
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool GetTokenInformation(IntPtr TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass, IntPtr TokenInformation, uint TokenInformationLength, out uint ReturnLength);
 
@@ -87,12 +84,6 @@ namespace Marionet.Core.Windows.Native
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool PostThreadMessage(uint threadId, uint msg, UIntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        public static extern int ShowCursor(bool bShow);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr SetCursor(IntPtr handle);
 
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);

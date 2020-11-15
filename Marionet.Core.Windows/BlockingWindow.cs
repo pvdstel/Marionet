@@ -25,7 +25,7 @@ namespace Marionet.Core.Windows
 
             protected override System.IntPtr WndProc(System.IntPtr hWnd, uint msg, System.IntPtr wParam, System.IntPtr lParam)
             {
-                if(msg == Native.Constants.WM_DISPLAYCHANGE)
+                if (msg == Native.Constants.WM_DISPLAYCHANGE)
                 {
                     DisplaysChanged?.Invoke(this, new EventArgs());
                 }
@@ -45,13 +45,22 @@ namespace Marionet.Core.Windows
             ShowInTaskbar = false;
             Title = "Marionet";
 
-            RefreshWindowRect();
-
-            Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromRgb(255, 255, 255), 0.01);
+            Background = Avalonia.Media.Brushes.Transparent;
             TransparencyLevelHint = WindowTransparencyLevel.Transparent;
             Topmost = true;
 
             blockingWindowImpl.DisplaysChanged += (sender, e) => DisplaysChanged();
+
+            // Set the cursor in PointerEnter, because the cursor is not hidden otherwise
+            void onPointerEnter(object? sender, EventArgs e)
+            {
+                Console.WriteLine("Entered");
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.None);
+            };
+            PointerEnter += onPointerEnter;
+
+            InitializeIfNeeded();
+            RefreshWindowRect();
         }
 
         public IPlatformHandle Handle { get => blockingWindowImpl.Handle; }
@@ -66,15 +75,15 @@ namespace Marionet.Core.Windows
         {
             var centerX = Screens.Primary.Bounds.Width / 2;
             var centerY = Screens.Primary.Bounds.Height / 2;
-
             Position = new Avalonia.PixelPoint(centerX - 1, centerY - 1);
+
+            Width = 2;
+            Height = 2;
+
             if (centerCursor)
             {
                 Native.Methods.SetCursorPos(centerX, centerY);
             }
-
-            Width = 2;
-            Height = 2;
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -89,15 +98,11 @@ namespace Marionet.Core.Windows
             RefreshWindowRect(true);
             Debug.WriteLine(nameof(BlockingWindow) + ": claiming focus");
             Native.Methods.SetForegroundWindow(Handle.Handle);
-            Debug.WriteLine(nameof(BlockingWindow) + ": decrementing cursor visibility");
-            _ = Native.Methods.ShowCursor(false);
         }
 
         public new void Hide()
         {
             base.Hide();
-            Debug.WriteLine(nameof(BlockingWindow) + ": incrementing cursor visibility");
-            _ = Native.Methods.ShowCursor(true);
         }
 
         private async void DisplaysChanged()
