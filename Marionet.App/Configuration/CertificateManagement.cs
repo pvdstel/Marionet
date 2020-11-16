@@ -5,8 +5,77 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Marionet.App.Configuration
 {
-    internal static class Certificate
+    internal class CertificateManagement : IDisposable
     {
+        private readonly X509Certificate2 serverCertificate;
+        private readonly X509Certificate2 clientCertificate;
+        private bool disposedValue;
+
+        public CertificateManagement(ConfigurationService configurationService)
+        {
+            if (configurationService == null)
+            {
+                throw new ArgumentNullException(nameof(configurationService));
+            }
+
+            string serverCertificatePath = configurationService.Configuration.ServerCertificatePath;
+            string clientCertificatePath = configurationService.Configuration.ClientCertificatePath;
+
+            bool serverCertificateCreated = false;
+            if (!File.Exists(serverCertificatePath))
+            {
+                X509Certificate2 certificate = BuildServerCertificate();
+                File.WriteAllBytes(serverCertificatePath, certificate.Export(X509ContentType.Pfx));
+                serverCertificateCreated = true;
+            }
+            serverCertificate = new X509Certificate2(serverCertificatePath);
+
+            if (serverCertificateCreated || !File.Exists(clientCertificatePath))
+            {
+                X509Certificate2 certificate = BuildClientCertificate(serverCertificate);
+                File.WriteAllBytes(clientCertificatePath, certificate.Export(X509ContentType.Pfx));
+            }
+
+            clientCertificate = new X509Certificate2(clientCertificatePath);
+        }
+
+        public X509Certificate2 ServerCertificate => serverCertificate;
+
+        public X509Certificate2 ClientCertificate => clientCertificate;
+
+        public bool IsValidServerCertificate(X509Certificate2 serverCert) => IsParent(serverCert, clientCertificate);
+
+        public bool IsValidClientCertificate(X509Certificate2 clientCert) => IsParent(ServerCertificate, clientCert);
+
+        public static bool IsParent(X509Certificate2 parent, X509Certificate2 child)
+        {
+            if (parent == null)
+            {
+                throw new ArgumentNullException(nameof(parent));
+            }
+            if (child == null)
+            {
+                throw new ArgumentNullException(nameof(child));
+            }
+
+            byte[] parentData = parent.SubjectName.RawData;
+            byte[] childData = child.IssuerName.RawData;
+            if (parentData.Length != childData.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < parentData.Length; ++i)
+            {
+                if (parentData[i] != childData[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private static X509Certificate2 BuildServerCertificate()
         {
             string certificateName = $"Marionet Server {Guid.NewGuid()}";
@@ -61,59 +130,24 @@ namespace Marionet.App.Configuration
             return certificate.CopyWithPrivateKey(rsa);
         }
 
-        private static bool serverCertificateCreated = false;
-        private static readonly Lazy<X509Certificate2> serverCertificate = new Lazy<X509Certificate2>(() =>
+        protected virtual void Dispose(bool disposing)
         {
-            if (!File.Exists(Config.Instance.ServerCertificatePath))
+            if (!disposedValue)
             {
-                X509Certificate2 certificate = BuildServerCertificate();
-                File.WriteAllBytes(Config.Instance.ServerCertificatePath, certificate.Export(X509ContentType.Pfx));
-                serverCertificateCreated = true;
-            }
-
-            return new X509Certificate2(Config.Instance.ServerCertificatePath);
-        });
-        public static X509Certificate2 ServerCertificate => serverCertificate.Value;
-
-        private static readonly Lazy<X509Certificate2> clientCertificate = new Lazy<X509Certificate2>(() =>
-        {
-            var serverCert = ServerCertificate;
-            if (serverCertificateCreated || !File.Exists(Config.Instance.ClientCertificatePath))
-            {
-                X509Certificate2 certificate = BuildClientCertificate(serverCert);
-                File.WriteAllBytes(Config.Instance.ClientCertificatePath, certificate.Export(X509ContentType.Pfx));
-            }
-
-            return new X509Certificate2(Config.Instance.ClientCertificatePath);
-        });
-        public static X509Certificate2 ClientCertificate => clientCertificate.Value;
-
-        public static bool IsParent(X509Certificate2 parent, X509Certificate2 child)
-        {
-            if (parent == null)
-            {
-                throw new ArgumentNullException(nameof(parent));
-            }
-            if (child == null)
-            {
-                throw new ArgumentNullException(nameof(child));
-            }
-
-            byte[] parentData = parent.SubjectName.RawData;
-            byte[] childData = child.IssuerName.RawData;
-            if (parentData.Length != childData.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < parentData.Length; ++i) {
-                if (parentData[i] != childData[i])
+                if (disposing)
                 {
-                    return false;
+                    serverCertificate.Dispose();
+                    clientCertificate.Dispose();
                 }
-            }
 
-            return true;
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

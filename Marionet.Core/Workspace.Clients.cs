@@ -85,6 +85,7 @@ namespace Marionet.Core
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
+            DebugMessage("desktops changed, recomputing");
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
             LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;

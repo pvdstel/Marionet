@@ -19,21 +19,39 @@ namespace Marionet.App
         private static Thread? appThread;
         private static TaskCompletionSource<TerminationReason>? stopReasonSource;
         private static TaskCompletionSource<bool>? roundEndSource;
-        private static readonly INetwork network = PlatformSelector.GetNetwork();
-        private static readonly SemaphoreSlim checkSemaphore = new SemaphoreSlim(1, 1);
-        private static readonly SemaphoreSlim runningSemaphore = new SemaphoreSlim(1, 1);
-        private static readonly Dictionary<string, PeerConnectionStatuses> peerStatuses = new Dictionary<string, PeerConnectionStatuses>();
+        private static readonly INetwork network;
+        private static readonly SemaphoreSlim checkRunningAllowedSemaphore ;
+        private static readonly SemaphoreSlim runningSemaphore;
+        private static readonly Dictionary<string, PeerConnectionStatuses> peerStatuses;
+
+        private static readonly ConfigurationService configurationService;
 
         private readonly IHostApplicationLifetime applicationLifetime;
 
         public Supervisor(IHostApplicationLifetime applicationLifetime)
         {
             this.applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
+
+            RunningAllowedUpdated += OnRunningAllowedUpdated;
+            ShutdownRequested += OnShutdownRequested;
         }
 
-        public static bool Running { get; private set; }
+        static Supervisor()
+        {
+            network = PlatformSelector.GetNetwork();
+            checkRunningAllowedSemaphore = new SemaphoreSlim(1, 1);
+            runningSemaphore = new SemaphoreSlim(1, 1);
+            peerStatuses = new Dictionary<string, PeerConnectionStatuses>();
+            configurationService = new ConfigurationService();
+
+            configurationService.ConfigurationChanged += OnEnvironmentUpdate;
+            NetworkChange.NetworkAddressChanged += OnEnvironmentUpdate;
+        }
+
+        public static bool SupervisorActive { get; private set; }
         public static bool RunningAllowed { get; private set; }
         public static bool HostRunning { get; private set; }
+
         public static IReadOnlyDictionary<string, PeerConnectionStatuses> PeerStatuses => new ReadOnlyDictionary<string, PeerConnectionStatuses>(peerStatuses);
 
         public static event EventHandler? Started;
@@ -46,8 +64,7 @@ namespace Marionet.App
 
         public static async Task Initialize()
         {
-            await Config.Load();
-            StartEnvironmentMonitor();
+            await configurationService.Load();
             await UpdateRunningAllowed();
         }
 
@@ -56,11 +73,11 @@ namespace Marionet.App
         public static async Task StartAsync(string[] args)
         {
             await runningSemaphore.WaitAsync();
-            if (Running)
+            if (SupervisorActive)
             {
                 return;
             }
-            Running = true;
+            SupervisorActive = true;
             runningSemaphore.Release();
             Started?.Invoke(null, new EventArgs());
 
@@ -116,7 +133,7 @@ namespace Marionet.App
             WriteDebugLine("Exiting...");
 
             await runningSemaphore.WaitAsync();
-            Running = false;
+            SupervisorActive = false;
             runningSemaphore.Release();
 
             Stopped?.Invoke(null, new EventArgs());
@@ -133,12 +150,6 @@ namespace Marionet.App
             {
                 ShutdownRequested?.Invoke(null, new EventArgs());
             });
-        }
-
-        public void StartMonitoring()
-        {
-            RunningAllowedUpdated += OnRunningAllowedUpdated;
-            ShutdownRequested += OnShutdownRequested;
         }
 
         public void SetPeerStatus(string peerName, PeerConnectionStatuses type, bool value)
@@ -177,37 +188,30 @@ namespace Marionet.App
             appThread.Start();
         }
 
-        private static void StartEnvironmentMonitor()
+        private static void OnEnvironmentUpdate(object? sender, EventArgs e )
         {
-            Config.SettingsReloaded += (sender, e) =>
-            {
-                _ = UpdateRunningAllowed();
-            };
-            NetworkChange.NetworkAddressChanged += (sender, e) =>
-            {
-                _ = UpdateRunningAllowed();
-            };
+            _ = UpdateRunningAllowed();
         }
 
         private static async Task UpdateRunningAllowed()
         {
-            await checkSemaphore.WaitAsync();
+            await checkRunningAllowedSemaphore.WaitAsync();
             var runningAllowed = await IsRunningAllowed();
             RunningAllowed = runningAllowed;
             RunningAllowedUpdated?.Invoke(null, new EventArgs());
-            checkSemaphore.Release();
+            checkRunningAllowedSemaphore.Release();
         }
 
         private static async Task<bool> IsRunningAllowed()
         {
-            if (Config.Instance.RunConditions.BlockAll)
+            if (configurationService.Configuration.RunConditions.BlockAll)
             {
                 return false;
             }
 
             var wirelessNetworks = await network.GetWirelessNetworkInterfaces();
             var connectedSsids = wirelessNetworks.Where(n => n.Connected).Select(n => n.SSID).ToList();
-            var allowedSsids = Config.Instance.RunConditions.AllowedSsids;
+            var allowedSsids = configurationService.Configuration.RunConditions.AllowedSsids;
             if (allowedSsids.Any() && !allowedSsids.Any(ssid => connectedSsids.Contains(ssid)))
             {
                 return false;
@@ -250,7 +254,7 @@ namespace Marionet.App
                          {
                              o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
                              o.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => true;
-                             o.ServerCertificate = Certificate.ServerCertificate;
+                             o.ServerCertificate = configurationService.CertificateManagement.ServerCertificate;
                          });
                      });
                      webBuilder.UseUrls($"https://0.0.0.0:{Config.ServerPort}");
@@ -300,6 +304,7 @@ namespace Marionet.App
                 {
                     RunningAllowedUpdated -= OnRunningAllowedUpdated;
                     ShutdownRequested -= OnShutdownRequested;
+
                     peerStatuses.Clear();
                     PeerStatusesUpdated?.Invoke(this, new EventArgs());
                 }

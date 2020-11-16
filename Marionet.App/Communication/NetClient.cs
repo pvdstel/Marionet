@@ -1,4 +1,5 @@
-﻿using Marionet.App.Core;
+﻿using Marionet.App.Configuration;
+using Marionet.App.Core;
 using Marionet.App.SignalR;
 using Marionet.Core;
 using Marionet.Core.Input;
@@ -14,15 +15,27 @@ namespace Marionet.App.Communication
     public class NetClient : SignalRClient<NetHubInterface>, INetClient
     {
         private readonly WorkspaceNetwork workspaceNetwork;
+        private readonly ConfigurationSynchronizationService configurationSynchronizationService;
         private readonly ILogger<NetClient> logger;
         private TaskCompletionSource<object?> connectionTaskCompletionSource;
 
         private string? serverName;
 
-        public NetClient(Uri uri, ILogger<NetClient> logger, IInputManager inputManager, WorkspaceNetwork workspaceNetwork, Supervisor supervisor) : base(uri, logger)
+        public NetClient(
+            Uri uri,
+            WorkspaceNetwork workspaceNetwork,
+            ConfigurationService configurationService,
+            ConfigurationSynchronizationService configurationSynchronizationService,
+            ILogger<NetClient> logger,
+            IInputManager inputManager,
+            Supervisor supervisor
+            ) : base(uri, configurationService, logger)
         {
-            this.logger = logger;
-            this.workspaceNetwork = workspaceNetwork;
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.workspaceNetwork = workspaceNetwork ?? throw new ArgumentNullException(nameof(workspaceNetwork));
+            if (configurationService == null) throw new ArgumentNullException(nameof(configurationService));
+            this.configurationSynchronizationService = configurationSynchronizationService ?? throw new ArgumentNullException(nameof(configurationSynchronizationService));
+
             connectionTaskCompletionSource = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
             this.Disconnected += (sender, e) =>
             {
@@ -38,14 +51,14 @@ namespace Marionet.App.Communication
             };
             this.Connected += async (sender, e) =>
             {
-                var serverIdentity = await Hub.Identify(Configuration.Config.Instance.Self, Configuration.Config.Instance.Desktops);
+                var serverIdentity = await Hub.Identify(configurationService.Configuration.Self, configurationService.Configuration.Desktops);
                 if (!serverIdentity.IsValid())
                 {
                     throw new InvalidOperationException("The server provided invalid identification data.");
                 }
 
                 serverName = serverIdentity.DesktopName;
-                await Configuration.Desktop.AddFromServer(serverIdentity.Desktops!);
+                await configurationService.DesktopManagement.AddFromServer(serverIdentity.Desktops!);
 
                 await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays().ToList());
                 if (!string.IsNullOrEmpty(serverName))
@@ -162,9 +175,9 @@ namespace Marionet.App.Communication
         }
 
         [HubCallable]
-        public async Task DesktopsUpdated(List<string> desktopNames)
+        public async Task UpdateSynchronizedConfiguration(SynchronizedConfig config)
         {
-            await Configuration.Desktop.AddFromServer(desktopNames);
+            await configurationSynchronizationService.Receive(config);
         }
 
         [HubCallable]

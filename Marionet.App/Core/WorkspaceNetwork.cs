@@ -1,7 +1,9 @@
 ﻿using Marionet.App.Communication;
+using Marionet.App.Configuration;
 using Marionet.Core;
 using Marionet.Core.Communication;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,17 +17,22 @@ namespace Marionet.App.Core
     {
         private readonly IHubContext<NetHub, INetClient> netHub;
         private readonly ClientIdentifierService clientIdentifierService;
-        private static CancellationTokenSource? onDesktopsChangedDebounce;
-        private const int DesktopsChangedDebounceTimeout = 2500;
+        private readonly ConfigurationService configurationService;
+        private readonly ILogger<WorkspaceNetwork> logger;
+        private CancellationTokenSource? onDesktopsChangedDebounce;
 
         public WorkspaceNetwork(
             IHubContext<NetHub, INetClient> netHub,
-            ClientIdentifierService clientIdentifierService)
+            ClientIdentifierService clientIdentifierService,
+            ConfigurationService configurationService,
+            ILogger<WorkspaceNetwork> logger)
         {
-            this.netHub = netHub;
-            this.clientIdentifierService = clientIdentifierService;
+            this.netHub = netHub ?? throw new ArgumentNullException(nameof(netHub));
+            this.clientIdentifierService = clientIdentifierService ?? throw new ArgumentNullException(nameof(clientIdentifierService));
+            this.configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            Configuration.Desktop.DesktopsChanged += OnDesktopsChanged;
+            configurationService.DesktopManagement.DesktopsChanged += OnDesktopsChanged;
         }
 
         public event EventHandler<ClientConnectionChangedEventArgs>? ClientConnected;
@@ -65,6 +72,12 @@ namespace Marionet.App.Core
             return netHub.Clients.Clients(nonNullConnectionIds.AsReadOnly());
         }
 
+        private void OnDesktopsChanged(object? sender, EventArgs e)
+        {
+            logger.LogDebug("Desktops updated -- triggering recompute in " + nameof(Workspace));
+            DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(configurationService.Configuration.Desktops));
+        }
+
         internal void ConnectClient(string desktopName) => ClientConnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void DisconnectClient(string desktopName) => ClientDisconnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void ChangeDisplays(string desktopName, ReadOnlyCollection<Rectangle> displays) => ClientDisplaysChanged?.Invoke(this, new ClientDisplaysChangedEventArgs(desktopName, displays));
@@ -79,23 +92,6 @@ namespace Marionet.App.Core
         internal void PressKeyboardButton(string desktopName, int keyCode) => PressKeyboardButtonReceived?.Invoke(this, new KeyboardButtonActionReceivedEventArgs(desktopName, keyCode));
         internal void ReleaseKeyboardButton(string desktopName, int keyCode) => ReleaseKeyboardButtonReceived?.Invoke(this, new KeyboardButtonActionReceivedEventArgs(desktopName, keyCode));
 
-        private async void OnDesktopsChanged(object? sender, EventArgs e)
-        {
-            if (onDesktopsChangedDebounce != null)
-            {
-                onDesktopsChangedDebounce.Cancel();
-                onDesktopsChangedDebounce.Dispose();
-            }
-
-            onDesktopsChangedDebounce = new CancellationTokenSource();
-            try
-            {
-                await Task.Delay(DesktopsChangedDebounceTimeout, onDesktopsChangedDebounce.Token);
-                DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(Configuration.Config.Instance.Desktops));
-            }
-            catch (TaskCanceledException) { }
-        }
-
         #region IDisposable Support
         private bool disposedValue = false;
 
@@ -105,7 +101,8 @@ namespace Marionet.App.Core
             {
                 if (disposing)
                 {
-                    Configuration.Desktop.DesktopsChanged -= OnDesktopsChanged;
+                    configurationService.DesktopManagement.DesktopsChanged -= OnDesktopsChanged;
+
                     onDesktopsChangedDebounce?.Cancel();
                     onDesktopsChangedDebounce?.Dispose();
                     onDesktopsChangedDebounce = null;

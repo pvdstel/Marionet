@@ -10,6 +10,7 @@ namespace Marionet.App
         {
             var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
             Console.WriteLine($"Marionet {appVersion}");
+
             await Supervisor.Initialize();
             await Supervisor.StartAsync(args);
         }

@@ -14,6 +14,7 @@ namespace Marionet.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
+        private readonly ConfigurationService configurationService;
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
         private bool isHostRunning;
@@ -26,6 +27,9 @@ namespace Marionet.UI.ViewModels
 
         public MainWindowViewModel()
         {
+            configurationService = new ConfigurationService();
+            configurationService.Load().Wait();
+
             StartSupervisorCommand = ReactiveCommand.Create(StartSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && !v && c));
             StopSupervisorCommand = ReactiveCommand.Create(StopSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && v && c));
             MoveSelectedHostUpCommand = ReactiveCommand.Create<string>(MoveSelectedHostUp, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, x => x.IsWaiting, (k, s, w) => !w && !string.IsNullOrEmpty(s) && k.IndexOf(s) > 0));
@@ -44,13 +48,13 @@ namespace Marionet.UI.ViewModels
             Supervisor.RunningAllowedUpdated += OnSupervisorRunningAllowedUpdated;
             Supervisor.HostRunningUpdated += OnHostRunningUpdated;
             Supervisor.PeerStatusesUpdated += OnPeerStatusesUpdated;
-            Config.SettingsReloaded += OnSettingsReloaded;
+            configurationService.ConfigurationChanged += OnConfigurationChanged;
 
-            IsSupervisorRunning = Supervisor.Running;
+            IsSupervisorRunning = Supervisor.SupervisorActive;
             IsRunningAllowed = Supervisor.RunningAllowed;
             IsHostRunning = Supervisor.HostRunning;
-            SelfName = Config.Instance.Self;
-            KnownHosts = Config.Instance.Desktops.ToList();
+            SelfName = configurationService.Configuration.Self;
+            KnownHosts = configurationService.Configuration.Desktops.ToList();
             PeerStatuses = GetPeerStatuses();
 
             var systemPermissions = PlatformSelector.GetSystemPersmissions();
@@ -61,7 +65,7 @@ namespace Marionet.UI.ViewModels
         public event EventHandler? ExitTriggered;
 
         public string AppVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
-        
+
         public bool IsSupervisorRunning
         {
             get => isSupervisorRunning;
@@ -183,35 +187,33 @@ namespace Marionet.UI.ViewModels
         private void MoveSelectedHostUp(string which)
         {
             IsWaiting = false;
-            List<string> next = Config.Instance.Desktops.ToList();
+            List<string> next = configurationService.Configuration.Desktops.ToList();
             int index = next.IndexOf(which);
             if (index > 0)
             {
                 next.RemoveAt(index);
                 next.Insert(index - 1, which);
             }
-            Config.Instance.Desktops = next;
-            _ = Config.Save();
+            _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
         }
 
         private void MoveSelectedHostDown(string which)
         {
             IsWaiting = false;
-            List<string> next = Config.Instance.Desktops.ToList();
+            List<string> next = configurationService.Configuration.Desktops.ToList();
             int index = next.IndexOf(which);
             if (index >= 0 && index < next.Count - 1)
             {
                 next.RemoveAt(index);
                 next.Insert(index + 1, which);
             }
-            Config.Instance.Desktops = next;
-            _ = Config.Save();
+            _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
         }
 
         private void OpenSettingsFile()
         {
             using Process process = new Process();
-            process.StartInfo.FileName = App.Configuration.Config.ConfigurationFile;
+            process.StartInfo.FileName = ConfigurationService.ConfigurationFile;
             process.StartInfo.UseShellExecute = true;
             process.Start();
         }
@@ -219,7 +221,7 @@ namespace Marionet.UI.ViewModels
         private void OpenSettingsDirectory()
         {
             using Process process = new Process();
-            process.StartInfo.FileName = App.Configuration.Config.ConfigurationDirectory;
+            process.StartInfo.FileName = ConfigurationService.ConfigurationDirectory;
             process.StartInfo.UseShellExecute = true;
             process.Start();
         }
@@ -280,12 +282,12 @@ namespace Marionet.UI.ViewModels
             });
         }
 
-        private void OnSettingsReloaded(object? sender, EventArgs e)
+        private void OnConfigurationChanged(object? sender, EventArgs e)
         {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                SelfName = Config.Instance.Self;
-                KnownHosts = Config.Instance.Desktops.ToList();
+                SelfName = configurationService.Configuration.Self;
+                KnownHosts = configurationService.Configuration.Desktops.ToList();
                 IsWaiting = false;
             });
         }
@@ -303,6 +305,8 @@ namespace Marionet.UI.ViewModels
                     Supervisor.Stopped -= OnSupervisorStopped;
                     Supervisor.RunningAllowedUpdated -= OnSupervisorRunningAllowedUpdated;
                     Supervisor.PeerStatusesUpdated -= OnPeerStatusesUpdated;
+
+                    configurationService.Dispose();
                 }
 
                 disposedValue = true;

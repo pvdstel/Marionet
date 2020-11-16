@@ -1,7 +1,7 @@
-﻿using Marionet.App.Core;
+﻿using Marionet.App.Configuration;
+using Marionet.App.Core;
 using Marionet.Core;
 using Marionet.Core.Input;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,42 +13,49 @@ namespace Marionet.App.Communication
     public class WorkspaceClientManager : IDisposable
     {
         private readonly Dictionary<string, NetClient> clients = new Dictionary<string, NetClient>();
+        private readonly Supervisor supervisor;
+        private readonly ConfigurationService configurationService;
+        private readonly ConfigurationSynchronizationService configurationSynchronizationService;
+        private readonly WorkspaceNetwork workspaceNetwork;
+        private readonly IInputManager inputManager;
         private readonly ILogger<WorkspaceClientManager> logger;
         private readonly ILogger<NetClient> clientLogger;
-        private readonly IInputManager inputManager;
-        private readonly WorkspaceNetwork workspaceNetwork;
-        private readonly IHubContext<NetHub, INetClient> netHub;
         private readonly IHostApplicationLifetime hostApplicationLifetime;
-        private readonly Supervisor supervisor;
         private readonly SemaphoreSlim mutationLock = new SemaphoreSlim(1, 1);
 
         public WorkspaceClientManager(
+            Supervisor supervisor,
+            ConfigurationService configurationService,
+            ConfigurationSynchronizationService configurationSynchronizationService,
+            WorkspaceNetwork workspaceNetwork,
+            IInputManager inputManager,
             ILogger<WorkspaceClientManager> logger,
             ILogger<NetClient> clientLogger,
-            IInputManager inputManager,
-            WorkspaceNetwork workspaceNetwork,
-            IHubContext<NetHub, INetClient> netHub,
-            IHostApplicationLifetime hostApplicationLifetime,
-            Supervisor supervisor)
+            IHostApplicationLifetime hostApplicationLifetime
+            )
         {
-            this.logger = logger;
-            this.clientLogger = clientLogger;
-            this.inputManager = inputManager;
-            this.workspaceNetwork = workspaceNetwork;
-            this.netHub = netHub;
-            this.hostApplicationLifetime = hostApplicationLifetime;
-            this.supervisor = supervisor;
+            this.supervisor = supervisor ?? throw new ArgumentNullException(nameof(supervisor));
+            this.configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+            this.configurationSynchronizationService = configurationSynchronizationService ?? throw new ArgumentNullException(nameof(configurationSynchronizationService));
+            this.workspaceNetwork = workspaceNetwork ?? throw new ArgumentNullException(nameof(workspaceNetwork));
+            this.inputManager = inputManager ?? throw new ArgumentNullException(nameof(inputManager));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.clientLogger = clientLogger ?? throw new ArgumentNullException(nameof(clientLogger));
+            this.hostApplicationLifetime = hostApplicationLifetime ?? throw new ArgumentNullException(nameof(hostApplicationLifetime));
+
+            configurationService.DesktopManagement.DesktopsChanged += OnDesktopsChanged;
         }
 
         public void Start()
         {
+            logger.LogDebug("Started");
             mutationLock.Wait();
-            foreach (var desktop in Configuration.Config.Instance.Desktops)
+            foreach (var desktop in configurationService.Configuration.Desktops)
             {
                 AddMachineClient(desktop);
             }
             mutationLock.Release();
-            Configuration.Desktop.DesktopsChanged += OnDesktopsChanged;
+            logger.LogDebug("Start completed");
         }
 
         public NetClient GetNetClient(string desktopName)
@@ -69,13 +76,14 @@ namespace Marionet.App.Communication
             mutationLock.Wait();
 
             HashSet<string> done = new HashSet<string>();
-            foreach (var desktopName in Configuration.Config.Instance.Desktops)
+            foreach (var desktopName in configurationService.Configuration.Desktops)
             {
                 if (!clients.ContainsKey(desktopName))
                 {
                     AddMachineClient(desktopName);
                 }
-                done.Add(desktopName.NormalizeDesktopName());
+                var normalizedName = desktopName.NormalizeDesktopName();
+                done.Add(normalizedName);
             }
 
             foreach (var connectedName in clients.Keys)
@@ -93,27 +101,29 @@ namespace Marionet.App.Communication
 
         private void AddMachineClient(string desktopName)
         {
-            if (string.Compare(desktopName, Configuration.Config.Instance.Self, StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (string.Compare(desktopName, configurationService.Configuration.Self, StringComparison.InvariantCultureIgnoreCase) == 0)
             {
+                logger.LogDebug($"Ignored desktop {desktopName} -- it is the current desktop");
                 return;
             }
 
-            var customHostSet = Configuration.Config.Instance.DesktopAddresses.TryGetValue(desktopName, out string? host);
+            var customHostSet = configurationService.Configuration.DesktopAddresses.TryGetValue(desktopName, out string? host);
             if (!customHostSet || host == null)
             {
                 host = desktopName;
             }
+            logger.LogDebug($"Connecting to {host} for {desktopName}");
 
-            var uri = Utility.GetNetHubUri(host, Configuration.Config.ServerPort);
+            var uri = Utility.GetNetHubUri(host, Config.ServerPort);
             logger.LogDebug($"Adding client for {uri}");
-            NetClient client = new NetClient(uri, clientLogger, inputManager, workspaceNetwork, supervisor);
+            NetClient client = new NetClient(uri, workspaceNetwork, configurationService, configurationSynchronizationService, clientLogger, inputManager, supervisor);
             clients.Add(desktopName.NormalizeDesktopName(), client);
             _ = client.Connect(hostApplicationLifetime.ApplicationStopping);
         }
 
-        private async void OnDesktopsChanged(object? sender, EventArgs e)
+        private void OnDesktopsChanged(object? sender, EventArgs e)
         {
-            await netHub.Clients.All.DesktopsUpdated(Configuration.Config.Instance.Desktops);
+            logger.LogDebug("Desktops updated -- checking for clients to add and remove");
             UpdateMachineClients();
         }
 
@@ -127,7 +137,7 @@ namespace Marionet.App.Communication
                 if (disposing)
                 {
                     mutationLock.Dispose();
-                    Configuration.Desktop.DesktopsChanged -= OnDesktopsChanged;
+                    configurationService.DesktopManagement.DesktopsChanged -= OnDesktopsChanged;
                 }
 
                 disposedValue = true;

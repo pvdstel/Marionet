@@ -3,10 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
@@ -47,7 +45,7 @@ namespace Marionet.App.Authentication
                 return AuthenticateResult.Fail("The certificate may not be self-signed.");
             }
 
-            if (Certificate.IsParent(Options.ServerCertificate, clientCertificate))
+            if (CertificateManagement.IsParent(Options.ServerCertificate, clientCertificate))
             {
                 ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(CertificateMatchAuthenticationDefaults.AuthenticationScheme));
                 return AuthenticateResult.Success(new AuthenticationTicket(claimsPrincipal, CertificateMatchAuthenticationDefaults.AuthenticationScheme));

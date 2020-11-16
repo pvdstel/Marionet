@@ -21,22 +21,27 @@ namespace Marionet.App.SignalR
         private bool retry = false;
         private CancellationToken connectCancellationToken = default;
 
-        public SignalRClient(Uri uri, ILogger<SignalRClient<T>> logger)
+        public SignalRClient(
+            Uri uri,
+            ConfigurationService configurationService,
+            ILogger<SignalRClient<T>> logger)
         {
-            this.uri = uri;
-            this.logger = logger;
+            this.uri = uri ?? throw new ArgumentNullException(nameof(uri));
+            if (configurationService == null) throw new ArgumentNullException(nameof(configurationService));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            
             connection = new HubConnectionBuilder()
                 .AddMessagePackProtocol()
                 .WithUrl(uri, options =>
                     {
                         options.WebSocketConfiguration = o =>
                         {
-                            o.ClientCertificates.Add(Certificate.ClientCertificate);
+                            o.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
                             o.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
                             {
                                 if (certificate is X509Certificate2 certificate2)
                                 {
-                                    return Certificate.IsParent(Certificate.ServerCertificate, certificate2);
+                                    return configurationService.CertificateManagement.IsValidClientCertificate(certificate2);
                                 }
                                 else
                                 {
@@ -44,13 +49,13 @@ namespace Marionet.App.SignalR
                                 }
                             };
                         };
-                        options.ClientCertificates.Add(Certificate.ClientCertificate);
+                        options.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
                         options.HttpMessageHandlerFactory = message =>
                         {
                             if (message is HttpClientHandler clientHandler)
                             {
-                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => certificate != null && Certificate.IsParent(Certificate.ServerCertificate, certificate);
-                                clientHandler.ClientCertificates.Add(Certificate.ClientCertificate);
+                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => certificate != null && configurationService.CertificateManagement.IsValidServerCertificate(certificate);
+                                clientHandler.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
                             }
                             return message;
                         };

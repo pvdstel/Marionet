@@ -1,16 +1,24 @@
-﻿using Marionet.Core;
+﻿using Marionet.App.Configuration;
+using Marionet.Core;
 using System.Collections.Generic;
 
 namespace Marionet.App.Core
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        public bool GetBlockTransferWhenButtonPressed() => Configuration.Config.Instance.BlockTransferWhenButtonPressed;
+        private readonly ConfigurationService configurationService;
 
-        public List<string> GetDesktopOrder() => Configuration.Config.Instance.Desktops;
+        public ConfigurationProvider(ConfigurationService configurationService)
+        {
+            this.configurationService = configurationService;
+        }
 
-        public string GetSelfName() => Configuration.Config.Instance.Self;
+        public bool GetBlockTransferWhenButtonPressed() => configurationService.Configuration.BlockTransferWhenButtonPressed;
 
-        public int GetStickyCornerSize() => Configuration.Config.Instance.StickyCornerSize;
+        public List<string> GetDesktopOrder() => configurationService.Configuration.Desktops;
+
+        public string GetSelfName() => configurationService.Configuration.Self;
+
+        public int GetStickyCornerSize() => configurationService.Configuration.StickyCornerSize;
     }
 }
