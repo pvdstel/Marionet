@@ -22,6 +22,8 @@ namespace Marionet.App.Configuration
 
         public RunConditions RunConditions { get; init; } = new RunConditions();
 
+        public bool ShowTrayIcon { get; init; } = true;
+
         public SynchronizedConfig ToSynchronizedConfig()
         {
             return new SynchronizedConfig()

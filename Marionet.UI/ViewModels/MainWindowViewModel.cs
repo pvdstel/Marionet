@@ -15,7 +15,6 @@ namespace Marionet.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
-        private readonly ConfigurationService configurationService;
         private bool isSupervisorRunning;
         private bool isRunningAllowed;
         private bool isHostRunning;
@@ -28,8 +27,8 @@ namespace Marionet.UI.ViewModels
 
         public MainWindowViewModel()
         {
-            configurationService = new ConfigurationService();
-            configurationService.Load().Wait();
+            ConfigurationService = new ConfigurationService();
+            ConfigurationService.Load().Wait();
 
             StartSupervisorCommand = ReactiveCommand.Create(StartSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && !v && c));
             StopSupervisorCommand = ReactiveCommand.Create(StopSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && v && c));
@@ -49,13 +48,13 @@ namespace Marionet.UI.ViewModels
             Supervisor.RunningAllowedUpdated += OnSupervisorRunningAllowedUpdated;
             Supervisor.HostRunningUpdated += OnHostRunningUpdated;
             Supervisor.PeerStatusesUpdated += OnPeerStatusesUpdated;
-            configurationService.ConfigurationChanged += OnConfigurationChanged;
+            ConfigurationService.ConfigurationChanged += OnConfigurationChanged;
 
             IsSupervisorRunning = Supervisor.SupervisorActive;
             IsRunningAllowed = Supervisor.RunningAllowed;
             IsHostRunning = Supervisor.HostRunning;
-            SelfName = configurationService.Configuration.Self;
-            KnownHosts = configurationService.Configuration.Desktops.ToList();
+            SelfName = ConfigurationService.Configuration.Self;
+            KnownHosts = ConfigurationService.Configuration.Desktops.ToList();
             PeerStatuses = GetPeerStatuses();
 
             var systemPermissions = PlatformSelector.GetSystemPersmissions();
@@ -66,6 +65,8 @@ namespace Marionet.UI.ViewModels
         public event EventHandler? ExitTriggered;
 
         public string AppVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
+
+        public ConfigurationService ConfigurationService { get; private set; }
 
         public bool IsSupervisorRunning
         {
@@ -188,24 +189,24 @@ namespace Marionet.UI.ViewModels
         private void MoveSelectedHostUp(string which)
         {
             IsWaiting = false;
-            ImmutableList<string> current = configurationService.Configuration.Desktops;
+            ImmutableList<string> current = ConfigurationService.Configuration.Desktops;
             int index = current.IndexOf(which);
             if (index > 0)
             {
                 var next = current.RemoveAt(index).Insert(index - 1, which);
-                _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
+                _ = ConfigurationService.Update(ConfigurationService.Configuration with { Desktops = next });
             }
         }
 
         private void MoveSelectedHostDown(string which)
         {
             IsWaiting = false;
-            ImmutableList<string> current = configurationService.Configuration.Desktops;
+            ImmutableList<string> current = ConfigurationService.Configuration.Desktops;
             int index = current.IndexOf(which);
             if (index >= 0 && index < current.Count - 1)
             {
                 var next = current.RemoveAt(index).Insert(index + 1, which);
-                _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
+                _ = ConfigurationService.Update(ConfigurationService.Configuration with { Desktops = next });
             }
         }
 
@@ -285,8 +286,8 @@ namespace Marionet.UI.ViewModels
         {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                SelfName = configurationService.Configuration.Self;
-                KnownHosts = configurationService.Configuration.Desktops.ToList();
+                SelfName = ConfigurationService.Configuration.Self;
+                KnownHosts = ConfigurationService.Configuration.Desktops.ToList();
                 IsWaiting = false;
             });
         }
@@ -305,7 +306,8 @@ namespace Marionet.UI.ViewModels
                     Supervisor.RunningAllowedUpdated -= OnSupervisorRunningAllowedUpdated;
                     Supervisor.PeerStatusesUpdated -= OnPeerStatusesUpdated;
 
-                    configurationService.Dispose();
+                    ConfigurationService.Dispose();
+                    ConfigurationService = null!;
                 }
 
                 disposedValue = true;
