@@ -14,8 +14,8 @@ namespace Marionet.App.Configuration
         public static readonly string ConfigurationFile = Path.Combine(ConfigurationDirectory, "config.json");
 
         public static readonly Config DefaultConfiguration = new Config();
+        private static readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
 
-        private readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
         private readonly JsonSerializerOptions jsonSerializerOptions;
         private readonly FileSystemWatcher settingsFileWatcher;
         private CancellationTokenSource? reloadEventCancellation;
@@ -102,7 +102,6 @@ namespace Marionet.App.Configuration
             {
                 if (disposing)
                 {
-                    storageLock.Dispose();
                     settingsFileWatcher.EnableRaisingEvents = false;
                     settingsFileWatcher.Changed -= OnSettingsFileChanged;
                     settingsFileWatcher.Dispose();

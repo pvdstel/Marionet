@@ -2,11 +2,13 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 
 namespace Marionet.App.Configuration
 {
     internal class CertificateManagement : IDisposable
     {
+        private static readonly SemaphoreSlim creationSemaphore = new SemaphoreSlim(1, 1);
         private readonly X509Certificate2 serverCertificate;
         private readonly X509Certificate2 clientCertificate;
         private bool disposedValue;
@@ -21,6 +23,7 @@ namespace Marionet.App.Configuration
             string serverCertificatePath = configurationService.Configuration.ServerCertificatePath;
             string clientCertificatePath = configurationService.Configuration.ClientCertificatePath;
 
+            creationSemaphore.Wait();
             bool serverCertificateCreated = false;
             if (!File.Exists(serverCertificatePath))
             {
@@ -37,6 +40,7 @@ namespace Marionet.App.Configuration
             }
 
             clientCertificate = new X509Certificate2(clientCertificatePath);
+            creationSemaphore.Release();
         }
 
         public X509Certificate2 ServerCertificate => serverCertificate;

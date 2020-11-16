@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marionet.Core.Windows", "Ma
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marionet.UI", "Marionet.UI\Marionet.UI.csproj", "{B81E562F-B5A4-4B8D-AB80-19E0D1E58363}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marionet.Core.Test", "Marionet.Core.Test\Marionet.Core.Test.csproj", "{7605B565-EEA5-48C0-B720-75F743A68BA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marionet.Core.Test", "Marionet.Core.Test\Marionet.Core.Test.csproj", "{7605B565-EEA5-48C0-B720-75F743A68BA9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
