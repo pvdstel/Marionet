@@ -29,6 +29,7 @@ Marionet supports the following configuration options, which can be changed in t
 | `runConditions` | `object` | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (`boolean`): blocks Marionet from running entirely.</li><li>`allowedSsids` (`string[]`): a whitelist of SSIDs that Marionet may run on.</li></ul> |
 | `self` | `string` | The name of the current node. Defaults to the machine name. |
 | `serverCertificatePath` | `string` | The path to the server certificate file. |
+| `showTrayIcon` | `boolean` | Determines whether Marionet UI displays a tray icon. |
 | `stickyCornerSize` | `integer` | The size (in pixels) of sticky corners. Must be an integer. Defaults to 6. |
 
 ## FAQ
