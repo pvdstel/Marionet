@@ -1,7 +1,7 @@
 ﻿using Marionet.Core;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,7 +10,7 @@ namespace Marionet.App.Configuration
     internal class DesktopManagement : IDisposable
     {
         private readonly ConfigurationService configurationService;
-        private static ReadOnlyCollection<string> lastDesktops = new List<string>().AsReadOnly();
+        private DesktopManagementState lastState = DesktopManagementState.Default;
         private bool disposedValue;
 
         public DesktopManagement(ConfigurationService configurationService)
@@ -58,9 +58,13 @@ namespace Marionet.App.Configuration
 
         private void OnConfigurationChanged(object? sender, EventArgs e)
         {
-            if (!configurationService.Configuration.Desktops.SequenceEqual(lastDesktops))
+            var potentialState = new DesktopManagementState(
+                configurationService.Configuration.Desktops.ToImmutableList(), 
+                configurationService.Configuration.DesktopYOffsets.ToImmutableDictionary()
+            );
+            if (!lastState.Equals(potentialState))
             {
-                lastDesktops = configurationService.Configuration.Desktops.AsReadOnly();
+                lastState = potentialState;
                 DesktopsChanged?.Invoke(null, new EventArgs());
             }
         }
