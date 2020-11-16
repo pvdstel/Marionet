@@ -61,6 +61,7 @@ namespace Marionet.Core.Windows.Native
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "These are Win32 constants.")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "Decimal is a virtual key.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1069:Enums values should not be duplicated", Justification = "These are Win32 constants.")]
     public enum VirtualKey : int
     {
         LeftButton = 0x01,

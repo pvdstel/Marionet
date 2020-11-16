@@ -7,6 +7,7 @@ namespace Marionet.UI
 {
     public class ViewLocator : IDataTemplate
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Probably needed for Avalonia")]
         public bool SupportsRecycling => false;
 
         public IControl Build(object data)
