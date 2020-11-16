@@ -28,7 +28,8 @@ Marionet supports the following configuration options, which can be changed in t
 | `blockTransferWhenButtonPressed` | boolean | Whether transferring control to another desktop is blocked when a button (keyboard or mouse) is currently being pressed. Defaults to true. |
 | `desktops` | string[] | The list of known desktops. |
 | `desktopAddresses` | object | A map with desktop names as keys and network addresses as values. Can be used to speed up connections. If a desktop is not specified, its name is used. |
-| `runConditions` | object | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (boolean): blocks Marionet from running entirely.</li><li>`allowedSsids` (string[]): a whitelist of SSIDs that Marionet may run on.</li></ul>
+| `runConditions` | object | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (boolean): blocks Marionet from running entirely.</li><li>`allowedSsids` (string[]): a whitelist of SSIDs that Marionet may run on.</li></ul> |
+| `desktopYOffsets` | object | A dictionary specifying the Y offset of each desktop, to align them vertically. Each field of the object must have a value of the number type. Defaults to 0 if not specified. |
 
 ## FAQ
 
