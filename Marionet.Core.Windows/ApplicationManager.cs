@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Marionet.Core.Input;
+using Marionet.Core.Windows.Native;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -47,9 +48,17 @@ namespace Marionet.Core.Windows
 
             Thread inputThread = new Thread(() =>
             {
-                IntPtr mouseHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_MOUSE_LL, LowLevelMouseProc, IntPtr.Zero, 0);
-                IntPtr keyboardHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_KEYBOARD_LL, LowLevelKeyboardProc, IntPtr.Zero, 0);
-                IntPtr switchHook = Native.Methods.SetWinEventHook(Native.Constants.EVENT_SYSTEM_DESKTOPSWITCH, Native.Constants.EVENT_SYSTEM_DESKTOPSWITCH, IntPtr.Zero, SwitchDesktopHandler, 0, 0, 0);
+                var mouseProc = new HookProc(LowLevelMouseProc);
+                var keyboardProc = new HookProc(LowLevelKeyboardProc);
+                var switchProc = new WinEventDelegate(SwitchDesktopHandler);
+
+                var mouseProcHandle = GCHandle.Alloc(mouseProc);
+                var keyboardProcHandle = GCHandle.Alloc(keyboardProc);
+                var switchProcHandle = GCHandle.Alloc(switchProc);
+
+                IntPtr mouseHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_MOUSE_LL, mouseProc, IntPtr.Zero, 0);
+                IntPtr keyboardHook = Native.Methods.SetWindowsHookEx(Native.IdHook.WH_KEYBOARD_LL, keyboardProc, IntPtr.Zero, 0);
+                IntPtr switchHook = Native.Methods.SetWinEventHook(Native.Constants.EVENT_SYSTEM_DESKTOPSWITCH, Native.Constants.EVENT_SYSTEM_DESKTOPSWITCH, IntPtr.Zero, switchProc, 0, 0, 0);
 
                 uint currentThreadId = Native.Methods.GetCurrentThreadId();
                 cancellationToken.Register(() =>
@@ -73,6 +82,10 @@ namespace Marionet.Core.Windows
                 Native.Methods.UnhookWindowsHookEx(mouseHook);
                 Native.Methods.UnhookWindowsHookEx(keyboardHook);
                 Native.Methods.UnhookWinEvent(switchHook);
+
+                mouseProcHandle.Free();
+                keyboardProcHandle.Free();
+                switchProcHandle.Free();
             });
             inputThread.Start();
 
