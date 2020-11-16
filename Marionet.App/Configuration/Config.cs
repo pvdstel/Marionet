@@ -12,17 +12,17 @@ namespace Marionet.App.Configuration
 
         public string ClientCertificatePath { get; init; } = Path.Combine(ConfigurationService.ConfigurationDirectory, "client.pfx");
 
-        public string Self { get; init; } = Environment.MachineName;
+        public bool BlockTransferWhenButtonPressed { get; init; } = true;
+
+        public bool ShowTrayIcon { get; init; } = true;
 
         public int StickyCornerSize { get; init; } = 6;
 
-        public bool BlockTransferWhenButtonPressed { get; init; } = true;
+        public RunConditions RunConditions { get; init; } = new RunConditions();
 
         public ImmutableDictionary<string, string> DesktopAddresses { get; init; } = ImmutableDictionary<string, string>.Empty.Add(Environment.MachineName, Environment.MachineName);
 
-        public RunConditions RunConditions { get; init; } = new RunConditions();
-
-        public bool ShowTrayIcon { get; init; } = true;
+        public string Self { get; init; } = Environment.MachineName;
 
         public SynchronizedConfig ToSynchronizedConfig()
         {
