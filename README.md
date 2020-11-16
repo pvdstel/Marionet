@@ -21,15 +21,15 @@ Marionet supports the following configuration options, which can be changed in t
 
 | Name | Type | Description |
 |---|---|---|
-| `blockTransferWhenButtonPressed` | boolean | Whether transferring control to another desktop is blocked when a button (keyboard or mouse) is currently being pressed. Defaults to true. |
-| `clientCertificatePath` | string | The path to the client certificate file. |
-| `desktopYOffsets` | object | A dictionary specifying the Y offset of each desktop, to align them vertically. Each field of the object must have a value of the number type. Defaults to 0 if not specified. |
-| `desktopAddresses` | object | A map with desktop names as keys and network addresses as values. Can be used to speed up connections. If a desktop is not specified, its name is used. |
-| `desktops` | string[] | The list of known desktops. |
-| `runConditions` | object | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (boolean): blocks Marionet from running entirely.</li><li>`allowedSsids` (string[]): a whitelist of SSIDs that Marionet may run on.</li></ul> |
-| `self` | string | The name of the current node. Defaults to the machine name. |
-| `serverCertificatePath` | string | The path to the server certificate file. |
-| `stickyCornerSize` | integer | The size (in pixels) of sticky corners. Defaults to 6. |
+| `blockTransferWhenButtonPressed` | `boolean` | Whether transferring control to another desktop is blocked when a button (keyboard or mouse) is currently being pressed. Defaults to true. |
+| `clientCertificatePath` | `string` | The path to the client certificate file. |
+| `desktopYOffsets` | `object` | A dictionary specifying the Y offset of each desktop, to align them vertically. Each field of the object must have a value of the `number` type, specifically integers. Defaults to 0 if not specified. |
+| `desktopAddresses` | `object` | A map with desktop names as keys and network addresses as values. Can be used to speed up connections. If a desktop is not specified, its name is used. |
+| `desktops` | `string[]` | The list of known desktops. |
+| `runConditions` | `object` | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (`boolean`): blocks Marionet from running entirely.</li><li>`allowedSsids` (`string[]`): a whitelist of SSIDs that Marionet may run on.</li></ul> |
+| `self` | `string` | The name of the current node. Defaults to the machine name. |
+| `serverCertificatePath` | `string` | The path to the server certificate file. |
+| `stickyCornerSize` | `integer` | The size (in pixels) of sticky corners. Must be an integer. Defaults to 6. |
 
 ## FAQ
 
