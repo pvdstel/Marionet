@@ -5,8 +5,7 @@ using Avalonia.Threading;
 using Marionet.App;
 using Marionet.UI.Views;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +24,7 @@ namespace Marionet.UI
 
         public static void Main(string[] args)
         {
-            InvariantArgs = args.Select(a => a.ToUpperInvariant()).ToList().AsReadOnly();
+            InvariantArgs = args.Select(a => a.ToUpperInvariant()).ToImmutableList();
 
             isFirst = new Mutex(false, FirstMutexName, out bool createdNewMutex);
             if (!createdNewMutex || !isFirst.WaitOne(100))
@@ -98,6 +97,6 @@ namespace Marionet.UI
             appShutdownToken.Cancel();
         }
 
-        public static ReadOnlyCollection<string> InvariantArgs { get; private set; } = new List<string>().AsReadOnly();
+        public static ImmutableList<string> InvariantArgs { get; private set; } = ImmutableList<string>.Empty;
     }
 }

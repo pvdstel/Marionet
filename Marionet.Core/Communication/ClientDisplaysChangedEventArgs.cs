@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 
 namespace Marionet.Core.Communication
 {
     public class ClientDisplaysChangedEventArgs : EventArgs
     {
-        public ClientDisplaysChangedEventArgs(string desktopName, ReadOnlyCollection<Rectangle> displays)
+        public ClientDisplaysChangedEventArgs(string desktopName, ImmutableList<Rectangle> displays)
         {
             DesktopName = desktopName;
             Displays = displays;
@@ -13,6 +13,6 @@ namespace Marionet.Core.Communication
 
         public string DesktopName { get; }
 
-        public ReadOnlyCollection<Rectangle> Displays { get; }
+        public ImmutableList<Rectangle> Displays { get; }
     }
 }

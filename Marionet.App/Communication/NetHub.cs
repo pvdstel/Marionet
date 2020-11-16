@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Marionet.App.Communication
@@ -83,7 +84,7 @@ namespace Marionet.App.Communication
 
             if (desktopName != null)
             {
-                workspaceNetwork.ChangeDisplays(desktopName, displays.AsReadOnly());
+                workspaceNetwork.ChangeDisplays(desktopName, displays.ToImmutableList());
             }
         }
     }

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -69,7 +69,7 @@ namespace Marionet.App.Core
         {
             var connectionIds = await Task.WhenAll(desktopNames.Select(d => clientIdentifierService.GetConnectionId(d)));
             List<string> nonNullConnectionIds = connectionIds.Where(d => d != null).ToList()!;
-            return netHub.Clients.Clients(nonNullConnectionIds.AsReadOnly());
+            return netHub.Clients.Clients(nonNullConnectionIds);
         }
 
         private void OnDesktopsChanged(object? sender, EventArgs e)
@@ -80,7 +80,7 @@ namespace Marionet.App.Core
 
         internal void ConnectClient(string desktopName) => ClientConnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void DisconnectClient(string desktopName) => ClientDisconnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
-        internal void ChangeDisplays(string desktopName, ReadOnlyCollection<Rectangle> displays) => ClientDisplaysChanged?.Invoke(this, new ClientDisplaysChangedEventArgs(desktopName, displays));
+        internal void ChangeDisplays(string desktopName, ImmutableList<Rectangle> displays) => ClientDisplaysChanged?.Invoke(this, new ClientDisplaysChangedEventArgs(desktopName, displays));
         internal void AssumeControl(string desktopName) => ControlAssumed?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void RelinquishControl(string desktopName) => ControlRelinquished?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));
         internal void ResignFromControl(string desktopName) => ClientResignedFromControl?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));

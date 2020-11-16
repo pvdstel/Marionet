@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 
 namespace Marionet.Core.Input
 {
     public class DisplaysChangedEventArgs : EventArgs
     {
-        public DisplaysChangedEventArgs(ReadOnlyCollection<Rectangle> displays, Rectangle primaryDisplay)
+        public DisplaysChangedEventArgs(ImmutableList<Rectangle> displays, Rectangle primaryDisplay)
         {
             Displays = displays;
             PrimaryDisplay = primaryDisplay;
         }
 
-        public ReadOnlyCollection<Rectangle> Displays { get; }
+        public ImmutableList<Rectangle> Displays { get; }
 
         public Rectangle PrimaryDisplay { get; }
     }

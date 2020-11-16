@@ -1,60 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace Marionet.Core
 {
     public class DisplayLayout
     {
-        private readonly List<Rectangle> displayRectangles = new List<Rectangle>();
-        private readonly Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
-        private readonly Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
-        private readonly Dictionary<Rectangle, string> displayIds = new Dictionary<Rectangle, string>();
-        private readonly Dictionary<string, Rectangle> displayById = new Dictionary<string, Rectangle>();
 
         public DisplayLayout(IEnumerable<Desktop> desktops)
         {
             if (desktops == null) throw new ArgumentNullException(nameof(desktops));
 
-            Initialize(desktops);
-        }
-
-        public ReadOnlyCollection<Rectangle> DisplayRectangles => displayRectangles.AsReadOnly();
-
-        public ReadOnlyDictionary<Rectangle, Desktop> DisplayDesktops => new ReadOnlyDictionary<Rectangle, Desktop>(displayDesktops);
-
-        public ReadOnlyDictionary<Desktop, Point> DesktopOrigins => new ReadOnlyDictionary<Desktop, Point>(desktopOrigins);
-        
-        public ReadOnlyDictionary<Rectangle, string> DisplayIds => new ReadOnlyDictionary<Rectangle, string>(displayIds);
-
-        public ReadOnlyDictionary<string, Rectangle> DisplayById => new ReadOnlyDictionary<string, Rectangle>(displayById);
-
-        public static string GetDisplayId(Desktop desktop, Rectangle display) => $"{desktop}--${display}";
-
-        public (Desktop desktop, Rectangle display)? FindPoint(Point point)
-        {
-            Rectangle? rect = null;
-            foreach (Rectangle r in displayRectangles)
-            {
-                if (r.Contains(point))
-                {
-                    rect = r;
-                    break;
-                }
-            }
-
-            if (rect.HasValue)
-            {
-                return (displayDesktops[rect.Value], rect.Value);
-            }
-
-            return null;
-        }
-
-        private void Initialize(IEnumerable<Desktop> desktops)
-        {
             int offset = 0;
+            List<Rectangle> displayRectangles = new List<Rectangle>();
+            Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
+            Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
+            Dictionary<Rectangle, string> displayIds = new Dictionary<Rectangle, string>();
+            Dictionary<string, Rectangle> displayById = new Dictionary<string, Rectangle>();
 
             foreach (Desktop desktop in desktops)
             {
@@ -78,6 +41,44 @@ namespace Marionet.Core
 
                 offset += desktopWidth;
             }
+
+            DisplayRectangles = displayRectangles.ToImmutableList();
+            DisplayDesktops = displayDesktops.ToImmutableDictionary();
+            DesktopOrigins = desktopOrigins.ToImmutableDictionary();
+            DisplayIds = displayIds.ToImmutableDictionary();
+            DisplayById = displayById.ToImmutableDictionary();
+        }
+
+        public ImmutableList<Rectangle> DisplayRectangles { get; private set; }
+
+        public ImmutableDictionary<Rectangle, Desktop> DisplayDesktops { get; private set; }
+
+        public ImmutableDictionary<Desktop, Point> DesktopOrigins { get; private set; }
+
+        public ImmutableDictionary<Rectangle, string> DisplayIds { get; private set; }
+
+        public ImmutableDictionary<string, Rectangle> DisplayById { get; private set; }
+
+        public static string GetDisplayId(Desktop desktop, Rectangle display) => $"{desktop}--${display}";
+
+        public (Desktop desktop, Rectangle display)? FindPoint(Point point)
+        {
+            Rectangle? rect = null;
+            foreach (Rectangle r in DisplayRectangles)
+            {
+                if (r.Contains(point))
+                {
+                    rect = r;
+                    break;
+                }
+            }
+
+            if (rect.HasValue)
+            {
+                return (DisplayDesktops[rect.Value], rect.Value);
+            }
+
+            return null;
         }
     }
 }

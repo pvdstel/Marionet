@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Xunit;
 
@@ -21,7 +22,7 @@ namespace Marionet.Core.Test
         {
             List<Desktop> desktops = new List<Desktop>()
             {
-                new Desktop("test-1", new List<Rectangle>().AsReadOnly(), null),
+                new Desktop("test-1", ImmutableList<Rectangle>.Empty, null),
             };
 
             DisplayLayout displayLayout = new DisplayLayout(desktops);
@@ -35,7 +36,7 @@ namespace Marionet.Core.Test
             var r = new Rectangle(0, 0, 10, 10);
             List<Desktop> desktops = new List<Desktop>()
             {
-                new Desktop("test-1", new List<Rectangle>() { r }.AsReadOnly(), null),
+                new Desktop("test-1", ImmutableList<Rectangle>.Empty.Add(r), null),
             };
 
             DisplayLayout displayLayout = new DisplayLayout(desktops);
@@ -52,8 +53,8 @@ namespace Marionet.Core.Test
         {
             List<Desktop> desktops = new List<Desktop>()
             {
-                new Desktop("test-1", new List<Rectangle>() { new Rectangle(0, 0, 10,10), new Rectangle(10, 10, 10, 10) }.AsReadOnly(), null),
-                new Desktop("test-2", new List<Rectangle>() { new Rectangle(0, 5, 15,15), new Rectangle(15, 0, 15, 15) }.AsReadOnly(), null),
+                new Desktop("test-1", new List<Rectangle>() { new Rectangle(0, 0, 10,10), new Rectangle(10, 10, 10, 10) }.ToImmutableList(), null),
+                new Desktop("test-2", new List<Rectangle>() { new Rectangle(0, 5, 15,15), new Rectangle(15, 0, 15, 15) }.ToImmutableList(), null),
             };
 
             DisplayLayout displayLayout = new DisplayLayout(desktops);
@@ -73,8 +74,8 @@ namespace Marionet.Core.Test
         {
             List<Desktop> desktops = new List<Desktop>()
             {
-                new Desktop("test-2", new List<Rectangle>() { new Rectangle(0, 5, 15,15), new Rectangle(15, 0, 15, 15) }.AsReadOnly(), null),
-                new Desktop("test-1", new List<Rectangle>() { new Rectangle(0, 0, 10,10), new Rectangle(10, 10, 10, 10) }.AsReadOnly(), null),
+                new Desktop("test-2", new List<Rectangle>() { new Rectangle(0, 5, 15,15), new Rectangle(15, 0, 15, 15) }.ToImmutableList(), null),
+                new Desktop("test-1", new List<Rectangle>() { new Rectangle(0, 0, 10,10), new Rectangle(10, 10, 10, 10) }.ToImmutableList(), null),
             };
 
             DisplayLayout displayLayout = new DisplayLayout(desktops);

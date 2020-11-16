@@ -1,6 +1,7 @@
 ﻿using Marionet.Core.Communication;
 using Marionet.Core.Input;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,7 +30,7 @@ namespace Marionet.Core
             }
 
             DebugMessage($"adding client {desktopName}");
-            desktops.Add(new Desktop(desktopName, new List<Rectangle>().AsReadOnly(), null));
+            desktops.Add(new Desktop(desktopName, ImmutableList<Rectangle>.Empty, null));
             displayLayout = CreateDisplayLayout(configurationProvider.GetDesktopOrder());
             DebugPrintDisplays();
 

@@ -6,6 +6,7 @@ using Marionet.Core.Input;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -161,7 +162,7 @@ namespace Marionet.App.Communication
                     return;
                 }
 
-                workspaceNetwork.ChangeDisplays(serverName!, displays.AsReadOnly());
+                workspaceNetwork.ChangeDisplays(serverName!, displays.ToImmutableList());
             }
         }
 
