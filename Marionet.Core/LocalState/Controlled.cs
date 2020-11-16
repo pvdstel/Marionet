@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace Marionet.Core.LocalState
 {
-    internal record Controlled(HashSet<string> By) : State;
+    internal record Controlled(ImmutableHashSet<string> By) : State;
 }

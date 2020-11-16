@@ -8,7 +8,7 @@ namespace Marionet.Core.Windows
 {
     public class WindowsNetwork : INetwork
     {
-        private Regex netshWlanRegex = new Regex("^\\s*(?<name>(?:\\w|\\s)+?)\\s+:\\s+(?<value>.+?)\\s*$");
+        private static readonly Regex netshWlanRegex = new Regex("^\\s*(?<name>(?:\\w|\\s)+?)\\s+:\\s+(?<value>.+?)\\s*$");
 
         public Task<List<WirelessNetworkInterface>> GetWirelessNetworkInterfaces()
         {

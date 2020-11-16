@@ -139,10 +139,17 @@ namespace Marionet.Core
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
             string desktopName = e.From.NormalizeDesktopName();
-            if (localState is LocalState.Controlled controlled && controlled.By.Contains(desktopName))
+            if (localState is LocalState.Controlled controlled)
             {
-                var localPoint = TranslateGlobalToLocal(e.Position);
-                await inputManager.MouseController.MoveMouse(localPoint);
+                if (controlled.By.Contains(desktopName))
+                {
+                    var localPoint = TranslateGlobalToLocal(e.Position);
+                    await inputManager.MouseController.MoveMouse(localPoint);
+                }
+                else
+                {
+                    DebugMessage($"received a mouse move event but {desktopName} is not in the controlled-by set");
+                }
             }
             mutableStateLock.Release();
         }
@@ -243,9 +250,9 @@ namespace Marionet.Core
         {
             var deltaX = e.Position.X - localCursorPosition.X;
             var deltaY = e.Position.Y - localCursorPosition.Y;
-            if (!e.Blocked || Math.Abs(deltaX) > mouseDeltaDebounceValueX || Math.Abs(deltaY) > mouseDeltaDebounceValueY)
+            if (!e.Blocked || Math.Abs(deltaX) > mouseDeltaDebounceValue.X || Math.Abs(deltaY) > mouseDeltaDebounceValue.Y)
             {
-                DebugMessage($"Mouse delta larger than debounce value ({deltaX} > {mouseDeltaDebounceValueX} || {deltaY} > {mouseDeltaDebounceValueY}).");
+                DebugMessage($"Mouse delta larger than debounce value ({deltaX} > {mouseDeltaDebounceValue.X} || {deltaY} > {mouseDeltaDebounceValue.Y}).");
                 return;
             }
 

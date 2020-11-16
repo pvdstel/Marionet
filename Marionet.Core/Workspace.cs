@@ -2,6 +2,7 @@
 using Marionet.Core.Input;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -24,8 +25,7 @@ namespace Marionet.Core
         private DisplayLayout displayLayout = default!;
         private LocalState.State localState = default!;
         private Point localCursorPosition;
-        private int mouseDeltaDebounceValueX;
-        private int mouseDeltaDebounceValueY;
+        private Point mouseDeltaDebounceValue;
 
         public Workspace(WorkspaceSettings settings)
         {
@@ -74,8 +74,7 @@ namespace Marionet.Core
             await mutableStateLock.WaitAsync();
             var primaryDisplay = inputManager.DisplayAdapter.GetPrimaryDisplay();
             selfDesktop = new Desktop(selfName, inputManager.DisplayAdapter.GetDisplays(), primaryDisplay);
-            mouseDeltaDebounceValueX = primaryDisplay.Width / 3;
-            mouseDeltaDebounceValueY = primaryDisplay.Height / 3;
+            mouseDeltaDebounceValue = new Point(primaryDisplay.Width / 3, primaryDisplay.Height / 3);
             connectedDesktops = new HashSet<Desktop>() { selfDesktop };
             displayLayout = new DisplayLayout(connectedDesktops);
 
@@ -122,18 +121,11 @@ namespace Marionet.Core
                 }
             }
 
-            HashSet<string> by;
-            if (localState is LocalState.Controlled controlled)
-            {
-                by = new HashSet<string>(controlled.By);
-            }
-            else
-            {
-                by = new HashSet<string>();
-            }
             DebugMessage($"adding {desktopName} to controlled by");
-            by.Add(desktopName);
-            localState = new LocalState.Controlled(by);
+            ImmutableHashSet<string> nextBy = localState is LocalState.Controlled controlled 
+                ? controlled.By.Add(desktopName)
+                : ImmutableHashSet<string>.Empty.Add(desktopName);
+            localState = new LocalState.Controlled(nextBy);
             DebugMessage("unblocking local input");
             await inputManager.BlockInput(false);
 
@@ -149,8 +141,7 @@ namespace Marionet.Core
 
             if (localState is LocalState.Controlled controlled)
             {
-                HashSet<string> by = new HashSet<string>(controlled.By);
-                by.Remove(desktopName);
+                ImmutableHashSet<string> by = controlled.By.Remove(desktopName);
                 if (by.Count == 0)
                 {
                     DebugMessage("no controllers left, becoming relinquished");

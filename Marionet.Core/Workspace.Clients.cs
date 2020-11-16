@@ -203,8 +203,7 @@ namespace Marionet.Core
             connectedDesktops.Remove(selfDesktop);
             selfDesktop = selfDesktop with { Displays = e.Displays, PrimaryDisplay = e.PrimaryDisplay };
             connectedDesktops.Add(selfDesktop);
-            mouseDeltaDebounceValueX = e.PrimaryDisplay.Width / 2;
-            mouseDeltaDebounceValueY = e.PrimaryDisplay.Height / 2;
+            mouseDeltaDebounceValue = new Point( e.PrimaryDisplay.Width / 3, e.PrimaryDisplay.Height / 3);
             CreateDisplayLayout();
 
             var allClients = await workspaceNetwork.GetAllClientDesktops();

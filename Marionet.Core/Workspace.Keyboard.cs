@@ -49,10 +49,17 @@ namespace Marionet.Core
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
             string desktopName = e.From.NormalizeDesktopName();
-            if (localState is LocalState.Controlled controlled && controlled.By.Contains(desktopName))
+            if (localState is LocalState.Controlled controlled)
             {
-                DebugMessage($"{e.KeyCode} from {e.From}");
-                await inputManager.KeyboardController.PressKeyboardButton(e.KeyCode);
+                if (controlled.By.Contains(desktopName))
+                {
+                    DebugMessage($"{e.KeyCode} from {e.From}");
+                    await inputManager.KeyboardController.PressKeyboardButton(e.KeyCode);
+                }
+                else
+                {
+                    DebugMessage($"received a key press event but {desktopName} is not in the controlled-by set");
+                }
             }
             mutableStateLock.Release();
         }
@@ -62,10 +69,17 @@ namespace Marionet.Core
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
             string desktopName = e.From.NormalizeDesktopName();
-            if (localState is LocalState.Controlled controlled && controlled.By.Contains(desktopName))
+            if (localState is LocalState.Controlled controlled)
             {
-                DebugMessage($"{e.KeyCode} from {e.From}");
-                await inputManager.KeyboardController.ReleaseKeyboardButton(e.KeyCode);
+                if (controlled.By.Contains(desktopName))
+                {
+                    DebugMessage($"{e.KeyCode} from {e.From}");
+                    await inputManager.KeyboardController.ReleaseKeyboardButton(e.KeyCode);
+                }
+                else
+                {
+                    DebugMessage($"received a key press event but {desktopName} is not in the controlled-by set");
+                }
             }
             mutableStateLock.Release();
         }
