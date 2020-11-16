@@ -82,9 +82,9 @@ namespace Marionet.UI
         {
             Task.Factory.StartNew(() =>
             {
-                while (true)
+                while (!appShutdownToken.IsCancellationRequested)
                 {
-                    if (signal.WaitOne(10000))
+                    if (signal.WaitOne(5000))
                     {
                         ShowMainWindow();
                     }
