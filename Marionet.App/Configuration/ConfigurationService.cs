@@ -17,7 +17,7 @@ namespace Marionet.App.Configuration
 
         private readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
         private readonly JsonSerializerOptions jsonSerializerOptions;
-        private readonly FileSystemWatcher settingsWatcher;
+        private readonly FileSystemWatcher settingsFileWatcher;
         private CancellationTokenSource? reloadEventCancellation;
         private bool disposedValue;
 
@@ -30,13 +30,13 @@ namespace Marionet.App.Configuration
 
             jsonSerializerOptions = new JsonSerializerOptions() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-            settingsWatcher = new FileSystemWatcher(ConfigurationDirectory)
+            settingsFileWatcher = new FileSystemWatcher(ConfigurationDirectory)
             {
                 NotifyFilter = NotifyFilters.LastWrite,
                 Filter = "*.json"
             };
-            settingsWatcher.Changed += SettingsFileChanged;
-            settingsWatcher.EnableRaisingEvents = true;
+            settingsFileWatcher.Changed += OnSettingsFileChanged;
+            settingsFileWatcher.EnableRaisingEvents = true;
 
             DesktopManagement = new DesktopManagement(this);
             CertificateManagement = new CertificateManagement(this);
@@ -75,7 +75,7 @@ namespace Marionet.App.Configuration
             await Save();
         }
 
-        private async void SettingsFileChanged(object sender, FileSystemEventArgs e)
+        private async void OnSettingsFileChanged(object sender, FileSystemEventArgs e)
         {
             if (e.FullPath == ConfigurationFile)
             {
@@ -103,7 +103,9 @@ namespace Marionet.App.Configuration
                 if (disposing)
                 {
                     storageLock.Dispose();
-                    settingsWatcher.Dispose();
+                    settingsFileWatcher.EnableRaisingEvents = false;
+                    settingsFileWatcher.Changed -= OnSettingsFileChanged;
+                    settingsFileWatcher.Dispose();
                     reloadEventCancellation?.Dispose();
                     CertificateManagement.Dispose();
                 }
