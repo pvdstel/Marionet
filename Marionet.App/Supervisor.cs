@@ -164,7 +164,14 @@ namespace Marionet.App
             {
                 status &= ~type;
             }
-            peerStatuses[normalizedName] = status;
+            if (status == PeerConnectionStatuses.None)
+            {
+                peerStatuses.Remove(peerName);
+            }
+            else
+            {
+                peerStatuses[normalizedName] = status;
+            }
             PeerStatusesUpdated?.Invoke(this, new EventArgs());
         }
 
