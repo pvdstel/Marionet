@@ -13,6 +13,8 @@ namespace Marionet.Core
 {
     public partial class Workspace : IDisposable
     {
+        private const int InputManagerStartTimeout = 10000;
+
         private readonly IWorkspaceNetwork workspaceNetwork;
         private readonly IInputManager inputManager;
         private readonly IConfigurationProvider configurationProvider;
@@ -34,10 +36,10 @@ namespace Marionet.Core
                 throw new ArgumentNullException(nameof(settings));
             }
 
-            this.workspaceNetwork = settings.WorkspaceNetwork ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.WorkspaceNetwork) + " cannot be null.");
-            this.inputManager = settings.InputManager ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.InputManager) + " cannot be null.");
-            this.configurationProvider = settings.ConfigurationProvider ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.ConfigurationProvider) + " cannot be null.");
-            this.selfName = configurationProvider.GetSelfName();
+            workspaceNetwork = settings.WorkspaceNetwork ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.WorkspaceNetwork) + " cannot be null.");
+            inputManager = settings.InputManager ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.InputManager) + " cannot be null.");
+            configurationProvider = settings.ConfigurationProvider ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.ConfigurationProvider) + " cannot be null.");
+            selfName = configurationProvider.GetSelfName();
 
             workspaceNetwork.ClientConnected += OnClientConnected;
             workspaceNetwork.ClientDisconnected += OnClientDisconnected;
@@ -68,7 +70,12 @@ namespace Marionet.Core
 
         public async Task Initialize()
         {
-            await inputManager.StartAsync();
+            var inputManagerStartTask = inputManager.StartAsync();
+            if (await Task.WhenAny(inputManagerStartTask, Task.Delay(InputManagerStartTimeout)) != inputManagerStartTask)
+            {
+                throw new TimeoutException($"The input manager instance was unable to start within the {InputManagerStartTimeout} ms timeout window.");
+            }
+
             localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
 
             await mutableStateLock.WaitAsync();
