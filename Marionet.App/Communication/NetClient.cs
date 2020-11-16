@@ -5,8 +5,8 @@ using Marionet.Core;
 using Marionet.Core.Input;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -58,9 +58,9 @@ namespace Marionet.App.Communication
                 }
 
                 serverName = serverIdentity.DesktopName;
-                await configurationService.DesktopManagement.AddFromServer(serverIdentity.Desktops!);
+                await configurationService.DesktopManagement.AddFromServer(serverIdentity.Desktops!.ToImmutableList());
 
-                await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays().ToList());
+                await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays());
                 if (!string.IsNullOrEmpty(serverName))
                 {
                     supervisor.SetPeerStatus(serverName, Supervisor.PeerConnectionStatuses.IsServer, true);
@@ -151,7 +151,7 @@ namespace Marionet.App.Communication
         }
 
         [HubCallable]
-        public async Task DisplaysChanged(ImmutableList<Rectangle> displays)
+        public async Task DisplaysChanged(List<Rectangle> displays)
         {
             if (await WaitForName())
             {
@@ -161,7 +161,7 @@ namespace Marionet.App.Communication
                     return;
                 }
 
-                workspaceNetwork.ChangeDisplays(serverName!, displays);
+                workspaceNetwork.ChangeDisplays(serverName!, displays.ToImmutableList());
             }
         }
 

@@ -15,7 +15,7 @@ namespace Marionet.App.Core
 
         public bool GetBlockTransferWhenButtonPressed() => configurationService.Configuration.BlockTransferWhenButtonPressed;
 
-        public ImmutableList<string> GetDesktopOrder() => configurationService.Configuration.Desktops.ToImmutableList();
+        public ImmutableList<string> GetDesktopOrder() => configurationService.Configuration.Desktops;
 
         public string GetSelfName() => configurationService.Configuration.Self;
 

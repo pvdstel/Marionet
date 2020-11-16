@@ -1,5 +1,5 @@
 ﻿using Marionet.Core.Input;
-using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Marionet.Core.Communication
@@ -25,7 +25,7 @@ namespace Marionet.Core.Communication
         /// Sent from a server to several clients to notify that its displays have changed.
         /// </summary>
         /// <param name="displays">The new displays.</param>
-        Task DisplaysChanged(ImmutableList<Rectangle> displays);
+        Task DisplaysChanged(List<Rectangle> displays);
 
         /// <summary>
         /// Sent from a client to a server that controls it to notify that its mouse position has changed.

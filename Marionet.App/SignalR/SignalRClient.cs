@@ -1,6 +1,5 @@
 ﻿using Marionet.App.Configuration;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
@@ -31,7 +30,7 @@ namespace Marionet.App.SignalR
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             
             connection = new HubConnectionBuilder()
-                .AddMessagePackProtocol()
+                //.AddMessagePackProtocol()
                 .WithUrl(uri, options =>
                     {
                         options.WebSocketConfiguration = o =>

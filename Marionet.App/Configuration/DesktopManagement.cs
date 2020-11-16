@@ -22,7 +22,7 @@ namespace Marionet.App.Configuration
 
         public event EventHandler? DesktopsChanged;
 
-        public async Task AddFromClient(List<string> clientDesktopNames)
+        public async Task AddFromClient(ImmutableList<string> clientDesktopNames)
         {
             if (clientDesktopNames == null) throw new ArgumentNullException(nameof(clientDesktopNames));
 
@@ -40,12 +40,12 @@ namespace Marionet.App.Configuration
 
             if (added)
             {
-                await configurationService.Update(configurationService.Configuration with { Desktops = desktops });
+                await configurationService.Update(configurationService.Configuration with { Desktops = desktops.ToImmutableList() });
                 DesktopsChanged?.Invoke(this, new EventArgs());
             }
         }
 
-        public async Task AddFromServer(List<string> serverDesktopNames)
+        public async Task AddFromServer(ImmutableList<string> serverDesktopNames)
         {
             if (serverDesktopNames == null) throw new ArgumentNullException(nameof(serverDesktopNames));
 
@@ -59,8 +59,8 @@ namespace Marionet.App.Configuration
         private void OnConfigurationChanged(object? sender, EventArgs e)
         {
             var potentialState = new DesktopManagementState(
-                configurationService.Configuration.Desktops.ToImmutableList(), 
-                configurationService.Configuration.DesktopYOffsets.ToImmutableDictionary()
+                configurationService.Configuration.Desktops, 
+                configurationService.Configuration.DesktopYOffsets
             );
             if (!lastState.Equals(potentialState))
             {

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 
 namespace Marionet.App.Configuration
@@ -18,11 +18,7 @@ namespace Marionet.App.Configuration
 
         public bool BlockTransferWhenButtonPressed { get; init; } = true;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "It's an init-only set.")]
-        public Dictionary<string, string> DesktopAddresses { get; init; } = new Dictionary<string, string>()
-        {
-            { Environment.MachineName, Environment.MachineName }
-        };
+        public ImmutableDictionary<string, string> DesktopAddresses { get; init; } = ImmutableDictionary<string, string>.Empty.Add(Environment.MachineName, Environment.MachineName);
 
         public RunConditions RunConditions { get; init; } = new RunConditions();
 

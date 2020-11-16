@@ -4,6 +4,7 @@ using Marionet.App.Configuration;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
@@ -187,27 +188,25 @@ namespace Marionet.UI.ViewModels
         private void MoveSelectedHostUp(string which)
         {
             IsWaiting = false;
-            List<string> next = configurationService.Configuration.Desktops.ToList();
-            int index = next.IndexOf(which);
+            ImmutableList<string> current = configurationService.Configuration.Desktops;
+            int index = current.IndexOf(which);
             if (index > 0)
             {
-                next.RemoveAt(index);
-                next.Insert(index - 1, which);
+                var next = current.RemoveAt(index).Insert(index - 1, which);
+                _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
             }
-            _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
         }
 
         private void MoveSelectedHostDown(string which)
         {
             IsWaiting = false;
-            List<string> next = configurationService.Configuration.Desktops.ToList();
-            int index = next.IndexOf(which);
-            if (index >= 0 && index < next.Count - 1)
+            ImmutableList<string> current = configurationService.Configuration.Desktops;
+            int index = current.IndexOf(which);
+            if (index >= 0 && index < current.Count - 1)
             {
-                next.RemoveAt(index);
-                next.Insert(index + 1, which);
+                var next = current.RemoveAt(index).Insert(index + 1, which);
+                _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
             }
-            _ = configurationService.Update(configurationService.Configuration with { Desktops = next });
         }
 
         private void OpenSettingsFile()

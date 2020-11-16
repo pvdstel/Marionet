@@ -54,7 +54,7 @@ namespace Marionet.App.Communication
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task<IdentifyResult> Identify(string desktopName, List<string> knownNames)
+        public async Task<IdentifyResult> Identify(string desktopName, ImmutableList<string> knownNames)
         {
             if (!(await clientIdentifierService.KnowsConnection(Context.ConnectionId)))
             {
@@ -69,11 +69,12 @@ namespace Marionet.App.Communication
             return new IdentifyResult()
             {
                 DesktopName = configurationService.Configuration.Self,
-                Desktops = configurationService.Configuration.Desktops,
+                Desktops = new List<string>(configurationService.Configuration.Desktops),
+                YOffsets = new Dictionary<string, int>(configurationService.Configuration.DesktopYOffsets),
             };
         }
 
-        public async Task ChangeDisplays(List<Rectangle> displays)
+        public async Task ChangeDisplays(ImmutableList<Rectangle> displays)
         {
             string? desktopName = await clientIdentifierService.GetDesktopName(Context.ConnectionId);
             if (displays == null)
@@ -84,7 +85,7 @@ namespace Marionet.App.Communication
 
             if (desktopName != null)
             {
-                workspaceNetwork.ChangeDisplays(desktopName, displays.ToImmutableList());
+                workspaceNetwork.ChangeDisplays(desktopName, displays);
             }
         }
     }

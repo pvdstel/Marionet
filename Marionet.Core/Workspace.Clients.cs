@@ -207,7 +207,7 @@ namespace Marionet.Core
             CreateDisplayLayout();
 
             var allClients = await workspaceNetwork.GetAllClientDesktops();
-            await allClients.DisplaysChanged(e.Displays);
+            await allClients.DisplaysChanged(e.Displays.ToList());
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)

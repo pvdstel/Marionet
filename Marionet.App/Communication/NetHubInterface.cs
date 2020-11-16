@@ -1,6 +1,6 @@
 ﻿using Marionet.Core;
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Marionet.App.Communication
@@ -14,8 +14,8 @@ namespace Marionet.App.Communication
             ChangeDisplays = null!;
         }
 
-        public readonly Func<string, List<string>, Task<IdentifyResult>> Identify;
+        public readonly Func<string, ImmutableList<string>, Task<IdentifyResult>> Identify;
 
-        public readonly Func<List<Rectangle>, Task> ChangeDisplays;
+        public readonly Func<ImmutableList<Rectangle>, Task> ChangeDisplays;
     }
 }

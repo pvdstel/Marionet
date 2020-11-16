@@ -33,8 +33,8 @@ namespace Marionet.App
                     .RequireAuthenticatedUser()
                     .Build();
             });
-            services.AddSignalR()
-                .AddMessagePackProtocol();
+            services.AddSignalR();
+                //.AddMessagePackProtocol();
 
             services.AddSingleton<ConfigurationService>(configurationService);
             services.AddSingleton<Supervisor>();
