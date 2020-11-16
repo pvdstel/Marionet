@@ -58,7 +58,7 @@ namespace Marionet.App.Communication
                 }
 
                 serverName = serverIdentity.DesktopName;
-                await configurationService.DesktopManagement.AddFromServer(serverIdentity.Desktops!.ToImmutableList());
+                await configurationService.DesktopManagement.AddFromServer(serverIdentity.Desktops!.ToImmutableList(), serverIdentity.DesktopYOffsets!.ToImmutableDictionary());
 
                 await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays());
                 if (!string.IsNullOrEmpty(serverName))

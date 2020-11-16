@@ -45,23 +45,24 @@ namespace Marionet.App.Configuration
             }
         }
 
-        public async Task AddFromServer(ImmutableList<string> serverDesktopNames)
+        public async Task AddFromServer(ImmutableList<string> serverDesktopNames, ImmutableDictionary<string, int> desktopYOffsets)
         {
             if (serverDesktopNames == null) throw new ArgumentNullException(nameof(serverDesktopNames));
+            if (desktopYOffsets == null) throw new ArgumentNullException(nameof(serverDesktopNames));
 
-            if (!configurationService.Configuration.Desktops.SequenceEqual(serverDesktopNames))
+            var receivedState = new DesktopManagementState(serverDesktopNames, desktopYOffsets);
+
+            if (!receivedState.Equals(lastState))
             {
-                await configurationService.Update(configurationService.Configuration with { Desktops = serverDesktopNames });
+                await configurationService.Update(configurationService.Configuration with { Desktops = serverDesktopNames, DesktopYOffsets = desktopYOffsets });
                 DesktopsChanged?.Invoke(this, new EventArgs());
             }
         }
 
         private void OnConfigurationChanged(object? sender, EventArgs e)
         {
-            var potentialState = new DesktopManagementState(
-                configurationService.Configuration.Desktops, 
-                configurationService.Configuration.DesktopYOffsets
-            );
+            var potentialState = new DesktopManagementState(configurationService.Configuration.Desktops, configurationService.Configuration.DesktopYOffsets);
+
             if (!lastState.Equals(potentialState))
             {
                 lastState = potentialState;

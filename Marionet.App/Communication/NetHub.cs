@@ -70,7 +70,7 @@ namespace Marionet.App.Communication
             {
                 DesktopName = configurationService.Configuration.Self,
                 Desktops = new List<string>(configurationService.Configuration.Desktops),
-                YOffsets = new Dictionary<string, int>(configurationService.Configuration.DesktopYOffsets),
+                DesktopYOffsets = new Dictionary<string, int>(configurationService.Configuration.DesktopYOffsets),
             };
         }
 
