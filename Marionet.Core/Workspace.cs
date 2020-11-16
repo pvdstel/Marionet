@@ -20,7 +20,7 @@ namespace Marionet.Core
 
         private readonly SemaphoreSlim mutableStateLock = new SemaphoreSlim(1, 1);
         private Desktop selfDesktop = default!;
-        private List<Desktop> desktops = default!;
+        private HashSet<Desktop> connectedDesktops = default!;
         private DisplayLayout displayLayout = default!;
         private LocalState.State localState = default!;
         private Point localCursorPosition;
@@ -76,8 +76,8 @@ namespace Marionet.Core
             selfDesktop = new Desktop(selfName, inputManager.DisplayAdapter.GetDisplays(), primaryDisplay);
             mouseDeltaDebounceValueX = primaryDisplay.Width / 3;
             mouseDeltaDebounceValueY = primaryDisplay.Height / 3;
-            desktops = new List<Desktop>() { selfDesktop };
-            displayLayout = new DisplayLayout(desktops);
+            connectedDesktops = new HashSet<Desktop>() { selfDesktop };
+            displayLayout = new DisplayLayout(connectedDesktops);
 
             var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
             localState = new LocalState.Uncontrolled(display, primaryDisplay);

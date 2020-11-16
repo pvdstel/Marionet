@@ -5,7 +5,6 @@ using Marionet.Core;
 using Marionet.Core.Input;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -152,7 +151,7 @@ namespace Marionet.App.Communication
         }
 
         [HubCallable]
-        public async Task DisplaysChanged(List<Rectangle> displays)
+        public async Task DisplaysChanged(ImmutableList<Rectangle> displays)
         {
             if (await WaitForName())
             {
@@ -162,7 +161,7 @@ namespace Marionet.App.Communication
                     return;
                 }
 
-                workspaceNetwork.ChangeDisplays(serverName!, displays.ToImmutableList());
+                workspaceNetwork.ChangeDisplays(serverName!, displays);
             }
         }
 

@@ -75,7 +75,7 @@ namespace Marionet.App.Core
         private void OnDesktopsChanged(object? sender, EventArgs e)
         {
             logger.LogDebug("Desktops updated -- triggering recompute in " + nameof(Workspace));
-            DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(configurationService.Configuration.Desktops));
+            DesktopsChanged?.Invoke(this, new DesktopsChangedEventArgs(configurationService.Configuration.Desktops.ToImmutableList()));
         }
 
         internal void ConnectClient(string desktopName) => ClientConnected?.Invoke(this, new ClientConnectionChangedEventArgs(desktopName));

@@ -30,8 +30,8 @@ namespace Marionet.Core
             }
 
             DebugMessage($"adding client {desktopName}");
-            desktops.Add(new Desktop(desktopName, ImmutableList<Rectangle>.Empty, null));
-            displayLayout = CreateDisplayLayout(configurationProvider.GetDesktopOrder());
+            connectedDesktops.Add(new Desktop(desktopName, ImmutableList<Rectangle>.Empty, null));
+            displayLayout = CreateDisplayLayout();
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)
@@ -67,8 +67,8 @@ namespace Marionet.Core
             }
 
             DebugMessage($"removing client {desktopName}");
-            desktops = desktops.Where(d => d.Name != desktopName).ToList();
-            displayLayout = new DisplayLayout(desktops);
+            connectedDesktops.RemoveWhere(d => d.Name == desktopName);
+            displayLayout = CreateDisplayLayout();
             DebugPrintDisplays();
 
             if (controlling != null)
@@ -113,7 +113,7 @@ namespace Marionet.Core
             }
 
             DebugMessage("recreating display layout");
-            displayLayout = CreateDisplayLayout(e.Desktops);
+            displayLayout = CreateDisplayLayout();
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)
@@ -142,8 +142,8 @@ namespace Marionet.Core
             await mutableStateLock.WaitAsync();
 
             var desktopName = e.DesktopName.NormalizeDesktopName();
-            var desktopIndex = desktops.FindIndex(d => d.Name == desktopName);
-            if (desktopIndex >= 0)
+            var desktop = connectedDesktops.FirstOrDefault(d => d.Name == desktopName);
+            if (desktop != null)
             {
                 LocalState.Controlling? controlling = localState as LocalState.Controlling;
                 LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
@@ -154,9 +154,9 @@ namespace Marionet.Core
                 }
 
                 DebugMessage($"displays for {desktopName} changed");
-                var oldDesktop = desktops[desktopIndex];
-                desktops[desktopIndex] = oldDesktop with { Displays = e.Displays };
-                displayLayout = new DisplayLayout(desktops);
+                connectedDesktops.Remove(desktop);
+                connectedDesktops.Add(desktop with { Displays = e.Displays });
+                displayLayout = CreateDisplayLayout();
                 DebugPrintDisplays();
 
                 if (controlling != null && activeDisplayId != null)
@@ -200,12 +200,15 @@ namespace Marionet.Core
             }
 
             DebugMessage("own displays changed");
+            connectedDesktops.Remove(selfDesktop);
             selfDesktop = selfDesktop with { Displays = e.Displays, PrimaryDisplay = e.PrimaryDisplay };
+            connectedDesktops.Add(selfDesktop);
             mouseDeltaDebounceValueX = e.PrimaryDisplay.Width / 2;
             mouseDeltaDebounceValueY = e.PrimaryDisplay.Height / 2;
-            displayLayout = new DisplayLayout(desktops);
+            CreateDisplayLayout();
+
             var allClients = await workspaceNetwork.GetAllClientDesktops();
-            await allClients.DisplaysChanged(new List<Rectangle>(e.Displays));
+            await allClients.DisplaysChanged(e.Displays);
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)
@@ -248,16 +251,19 @@ namespace Marionet.Core
             localState = new LocalState.Uncontrolled(primaryDisplay, selfDesktop.PrimaryDisplay!.Value);
         }
 
-        private DisplayLayout CreateDisplayLayout(List<string> desktopNames)
+        private DisplayLayout CreateDisplayLayout()
         {
-            var desktopOrder = desktopNames.Select(d => d.NormalizeDesktopName()).ToList();
-            var groupedDesktops = desktops.GroupBy(d => desktopOrder.Contains(d.Name)).ToDictionary(k => k.Key, k => k.ToList());
-            desktops = groupedDesktops.ContainsKey(true) ? groupedDesktops[true].OrderBy(d => desktopOrder.IndexOf(d.Name)).ToList() : new List<Desktop>();
+            var desktopOrder = configurationProvider.GetDesktopOrder().Select(d => d.NormalizeDesktopName()).ToList();
+
+            var groupedDesktops = connectedDesktops.GroupBy(d => desktopOrder.Contains(d.Name)).ToDictionary(k => k.Key, k => k.ToImmutableList());
+            List<Desktop> nextDesktops = groupedDesktops.ContainsKey(true) ? groupedDesktops[true].OrderBy(d => desktopOrder.IndexOf(d.Name)).ToList() : new List<Desktop>();
+
             if (groupedDesktops.ContainsKey(false))
             {
-                desktops.AddRange(groupedDesktops[false]);
+                nextDesktops.AddRange(groupedDesktops[false]);
             }
-            return new DisplayLayout(desktops);
+
+            return new DisplayLayout(nextDesktops);
         }
     }
 }

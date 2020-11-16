@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace Marionet.Core
 {
@@ -6,7 +6,7 @@ namespace Marionet.Core
     {
         string GetSelfName();
 
-        List<string> GetDesktopOrder();
+        ImmutableList<string> GetDesktopOrder();
 
         int GetStickyCornerSize();
 

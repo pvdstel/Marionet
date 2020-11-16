@@ -1,6 +1,6 @@
 ﻿using Marionet.App.Configuration;
 using Marionet.Core;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Marionet.App.Core
 {
@@ -15,7 +15,7 @@ namespace Marionet.App.Core
 
         public bool GetBlockTransferWhenButtonPressed() => configurationService.Configuration.BlockTransferWhenButtonPressed;
 
-        public List<string> GetDesktopOrder() => configurationService.Configuration.Desktops;
+        public ImmutableList<string> GetDesktopOrder() => configurationService.Configuration.Desktops.ToImmutableList();
 
         public string GetSelfName() => configurationService.Configuration.Self;
 
