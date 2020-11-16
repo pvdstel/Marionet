@@ -50,9 +50,11 @@ namespace Marionet.UI.Views
                     throw new FileNotFoundException("The icon resource could not be loaded.");
                 }
                 trayIconImage = new Icon(iconStream);
-                notifyIcon = new BasicNotifyIcon(trayIconImage);
-                notifyIcon.Text = "Marionet";
-                notifyIcon.Visible = vm.ConfigurationService.Configuration.ShowTrayIcon;
+                notifyIcon = new BasicNotifyIcon(trayIconImage)
+                {
+                    Text = "Marionet",
+                    Visible = vm.ConfigurationService.Configuration.ShowTrayIcon
+                };
                 notifyIcon.Clicked += OnNotifyIconClicked;
             }
 
