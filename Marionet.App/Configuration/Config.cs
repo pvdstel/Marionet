@@ -18,6 +18,10 @@ namespace Marionet.App.Configuration
 
         public int StickyCornerSize { get; init; } = 6;
 
+        public int MinTransferDistance { get; init; } = 10;
+
+        public int MaxTransferDistance { get; init; } = 0;
+
         public RunConditions RunConditions { get; init; } = new RunConditions();
 
         public ImmutableDictionary<string, string> DesktopAddresses { get; init; } = ImmutableDictionary<string, string>.Empty.Add(Environment.MachineName, Environment.MachineName);

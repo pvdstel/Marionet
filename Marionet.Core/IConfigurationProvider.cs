@@ -12,6 +12,8 @@ namespace Marionet.Core
 
         int GetStickyCornerSize();
 
+        (int, int) GetTransferDistance();
+
         bool GetBlockTransferWhenButtonPressed();
     }
 }

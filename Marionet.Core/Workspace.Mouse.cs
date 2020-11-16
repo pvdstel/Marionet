@@ -50,6 +50,32 @@ namespace Marionet.Core
             return null;
         }
 
+        /// <summary>
+        /// If the transfer distances are specified, blocks the cursor from transferring to another desktop if the speed is too great
+        /// or too small.
+        /// </summary>
+        /// <param name="nextPosition">The next global cursor position.</param>
+        /// <param name="currentDisplay">The currently active display.</param>
+        /// <returns>An optional point. If it has a value, that is the next cursor position clamped to the current display.</returns>
+        private Point? GetTransferDistanceBlockPosition(Point nextPosition, Rectangle currentDisplay)
+        {
+            var (minTransferDistance, maxTransferDistance) = configurationProvider.GetTransferDistance();
+            var clampedPosition = currentDisplay.Clamp(nextPosition);
+            var distance = clampedPosition.EuclideanDistance(nextPosition);
+
+            if (minTransferDistance > 0 && distance < minTransferDistance)
+            {
+                return clampedPosition;
+            }
+
+            if (maxTransferDistance > 0 && distance > maxTransferDistance)
+            {
+                return clampedPosition;
+            }
+
+            return null;
+        }
+
         private async void OnMouseMoved(object? sender, MouseMoveEventArgs e)
         {
             await EnsureInitialized();
@@ -221,8 +247,13 @@ namespace Marionet.Core
                     {
                         var stickyPosition = GetStickyPosition(nextGlobalPoint, nextGlobalPoint, uncontrolled.ActiveDisplay);
                         var keyButtonBlockPosition = GetKeyButtonBlockPosition(nextGlobalPoint, uncontrolled.ActiveDisplay);
+                        var transferDistanceBlockPosition = GetTransferDistanceBlockPosition(nextGlobalPoint, uncontrolled.ActiveDisplay);
 
-                        if (!stickyPosition.HasValue && !keyButtonBlockPosition.HasValue)
+                        DebugMessage($"transfer blocked by sticky corners: {stickyPosition}", condition: stickyPosition != null);
+                        DebugMessage($"transfer blocked by pressed key or button: {keyButtonBlockPosition}", condition: keyButtonBlockPosition != null);
+                        DebugMessage($"transfer blocked by transfer distance: {transferDistanceBlockPosition}", condition: transferDistanceBlockPosition != null);
+
+                        if (!stickyPosition.HasValue && !keyButtonBlockPosition.HasValue && !transferDistanceBlockPosition.HasValue)
                         {
                             DebugMessage("blocking local input");
                             await inputManager.BlockInput(true);
@@ -284,14 +315,24 @@ namespace Marionet.Core
                     if (nextDesktop != controlling.ActiveDesktop)
                     {
                         var keyButtonBlockPoint = GetKeyButtonBlockPosition(nextGlobalPoint, controlling.ActiveDisplay);
+                        var transferDistanceBlockPosition = GetTransferDistanceBlockPosition(nextGlobalPoint, controlling.ActiveDisplay);
 
                         if (keyButtonBlockPoint.HasValue)
                         {
-                            DebugMessage($"moving to display {keyButtonBlockPoint} on same desktop {nextDesktop} [blocked: button down]");
-                            localState = new LocalState.Controlling(controlling.ActiveDesktop, controlling.ActiveDisplay, keyButtonBlockPoint.Value);
+                            DebugMessage($"moving to {keyButtonBlockPoint} on same desktop {nextDesktop} [blocked: button down]");
+                            localState = controlling with { CursorPosition = keyButtonBlockPoint.Value };
                             if (client != null)
                             {
                                 await client.MoveMouse(keyButtonBlockPoint!.Value);
+                            }
+                        }
+                        else if (transferDistanceBlockPosition.HasValue)
+                        {
+                            DebugMessage($"moving to {keyButtonBlockPoint} on same desktop {nextDesktop} [blocked: transfer distance]");
+                            localState = controlling with { CursorPosition = transferDistanceBlockPosition.Value };
+                            if (client != null)
+                            {
+                                await client.MoveMouse(transferDistanceBlockPosition!.Value);
                             }
                         }
                         else

@@ -22,5 +22,7 @@ namespace Marionet.App.Core
         public string GetSelfName() => configurationService.Configuration.Self;
 
         public int GetStickyCornerSize() => configurationService.Configuration.StickyCornerSize;
+
+        public (int, int) GetTransferDistance() => (configurationService.Configuration.MinTransferDistance, configurationService.Configuration.MaxTransferDistance);
     }
 }

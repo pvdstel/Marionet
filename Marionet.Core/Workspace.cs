@@ -129,7 +129,7 @@ namespace Marionet.Core
             }
 
             DebugMessage($"adding {desktopName} to controlled by");
-            ImmutableHashSet<string> nextBy = localState is LocalState.Controlled controlled 
+            ImmutableHashSet<string> nextBy = localState is LocalState.Controlled controlled
                 ? controlled.By.Add(desktopName)
                 : ImmutableHashSet<string>.Empty.Add(desktopName);
             localState = new LocalState.Controlled(nextBy);
@@ -197,9 +197,9 @@ namespace Marionet.Core
         private Task EnsureInitialized() => initialized.Task;
 
         [Conditional("DEBUG")]
-        private static void DebugMessage(string message, [CallerMemberName] string source = "")
+        private static void DebugMessage(string message, [CallerMemberName] string source = "", bool condition = true)
         {
-            Debug.WriteLine($"{source}: {message}");
+            if (condition) Debug.WriteLine($"{source}: {message}");
         }
 
         [Conditional("DEBUG")]

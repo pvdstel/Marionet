@@ -16,6 +16,13 @@ namespace Marionet.Core
 
         public Point Offset(int byX, int byY) => new Point(X + byX, Y + byY);
 
+        public double EuclideanDistance(Point to)
+        {
+            int dx = X - to.X;
+            int dy = Y - to.Y;
+            return Math.Sqrt((dx * dx) + (dy * dy));
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is Point point && Equals(point);

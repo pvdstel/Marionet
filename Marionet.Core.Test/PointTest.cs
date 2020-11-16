@@ -33,5 +33,19 @@ namespace Marionet.Core.Test
             var actual = first.Offset(byX, byY);
             Assert.Equal(expected, actual);
         }
+
+        [Theory]
+        [InlineData(0, 0, 3, 4, 5)]
+        [InlineData(0, 0, 6, 8, 10)]
+        [InlineData(0, 0, -3, 4, 5)]
+        [InlineData(0, 0, -6, 8, 10)]
+        [InlineData(0, 0, 3, -4, 5)]
+        [InlineData(0, 0, 6, -8, 10)]
+        [InlineData(0, 0, -3, -4, 5)]
+        [InlineData(0, 0, -6, -8, 10)]
+        public void TestEuclideanDistance(int x1, int y1, int x2, int y2, double d)
+        {
+            Assert.Equal(d, new Point(x1, y1).EuclideanDistance(new Point(x2, y2)));
+        }
     }
 }
