@@ -8,6 +8,8 @@ namespace Marionet.Core
 
         ImmutableList<string> GetDesktopOrder();
 
+        ImmutableDictionary<string, int> GetDesktopYOffsets();
+
         int GetStickyCornerSize();
 
         bool GetBlockTransferWhenButtonPressed();

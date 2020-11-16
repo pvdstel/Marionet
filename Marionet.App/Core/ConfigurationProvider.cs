@@ -17,6 +17,8 @@ namespace Marionet.App.Core
 
         public ImmutableList<string> GetDesktopOrder() => configurationService.Configuration.Desktops;
 
+        public ImmutableDictionary<string, int> GetDesktopYOffsets() => configurationService.Configuration.DesktopYOffsets;
+
         public string GetSelfName() => configurationService.Configuration.Self;
 
         public int GetStickyCornerSize() => configurationService.Configuration.StickyCornerSize;

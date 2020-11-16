@@ -262,7 +262,7 @@ namespace Marionet.Core
                 nextDesktops.AddRange(groupedDesktops[false]);
             }
 
-            return new DisplayLayout(nextDesktops);
+            return new DisplayLayout(nextDesktops, configurationProvider.GetDesktopYOffsets());
         }
     }
 }

@@ -76,7 +76,7 @@ namespace Marionet.Core
             selfDesktop = new Desktop(selfName, inputManager.DisplayAdapter.GetDisplays(), primaryDisplay);
             mouseDeltaDebounceValue = new Point(primaryDisplay.Width / 3, primaryDisplay.Height / 3);
             connectedDesktops = new HashSet<Desktop>() { selfDesktop };
-            displayLayout = new DisplayLayout(connectedDesktops);
+            displayLayout = new DisplayLayout(connectedDesktops, configurationProvider.GetDesktopYOffsets());
 
             var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
             localState = new LocalState.Uncontrolled(display, primaryDisplay);

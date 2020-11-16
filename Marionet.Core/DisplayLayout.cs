@@ -8,11 +8,12 @@ namespace Marionet.Core
     public class DisplayLayout
     {
 
-        public DisplayLayout(IEnumerable<Desktop> desktops)
+        public DisplayLayout(IEnumerable<Desktop> desktops, IDictionary<string, int> yOffsets)
         {
             if (desktops == null) throw new ArgumentNullException(nameof(desktops));
+            if (yOffsets == null) throw new ArgumentNullException(nameof(yOffsets));
 
-            int offset = 0;
+            int xOffset = 0;
             List<Rectangle> displayRectangles = new List<Rectangle>();
             Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
             Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
@@ -26,20 +27,25 @@ namespace Marionet.Core
                 int desktopWidth = desktopMaxRight - desktopMinLeft;
                 int desktopLeftOffset = -desktopMinLeft;
 
-                Point desktopOrigin = new Point(offset + desktop.PrimaryDisplay.GetValueOrDefault().X + desktopLeftOffset, 0);
+                if (!yOffsets.TryGetValue(desktop.Name, out int desktopYOffset))
+                {
+                    desktopYOffset = 0;
+                }
+
+                Point desktopOrigin = new Point(xOffset + desktop.PrimaryDisplay.GetValueOrDefault().X + desktopLeftOffset, desktopYOffset);
                 desktopOrigins.Add(desktop, desktopOrigin);
 
                 foreach (Rectangle display in desktop.Displays)
                 {
                     var displayId = GetDisplayId(desktop, display);
-                    Rectangle rect = display.Offset(desktopOrigin.X, 0);
+                    Rectangle rect = display.Offset(desktopOrigin.X, desktopYOffset);
                     displayRectangles.Add(rect);
                     displayDesktops.Add(rect, desktop);
                     displayIds.Add(rect, displayId);
                     displayById.Add(displayId, rect);
                 }
 
-                offset += desktopWidth;
+                xOffset += desktopWidth;
             }
 
             DisplayRectangles = displayRectangles.ToImmutableList();
