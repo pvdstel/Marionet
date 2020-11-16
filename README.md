@@ -26,11 +26,15 @@ Marionet supports the following configuration options, which can be changed in t
 | `desktopYOffsets` | `object` | A dictionary specifying the Y offset of each desktop, to align them vertically. Each field of the object must have a value of the `number` type, specifically integers. Defaults to 0 if not specified. |
 | `desktopAddresses` | `object` | A map with desktop names as keys and network addresses as values. Can be used to speed up connections. If a desktop is not specified, its name is used. |
 | `desktops` | `string[]` | The list of known desktops. |
+| `maxTransferDistance` | `number` | The maximum distance that the cursor may travel onto another desktop before it is allowed to transfer. Must be an integer number. No effect when set to 0. |
+| `minTransferDistance` | `number` | The minimum distance that the cursor must travel onto another desktop before it is allowed to transfer. Must be an integer number. Defaults to 10. No effect when set to 0. |
 | `runConditions` | `object` | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (`boolean`): blocks Marionet from running entirely.</li><li>`allowedSsids` (`string[]`): a whitelist of SSIDs that Marionet may run on.</li></ul> |
 | `self` | `string` | The name of the current node. Defaults to the machine name. |
 | `serverCertificatePath` | `string` | The path to the server certificate file. |
 | `showTrayIcon` | `boolean` | Determines whether Marionet UI displays a tray icon. |
-| `stickyCornerSize` | `integer` | The size (in pixels) of sticky corners. Must be an integer. Defaults to 6. |
+| `stickyCornerSize` | `integer` | The size (in pixels) of sticky corners. Must be an integer. Defaults to 6. Disabled when set to 0. |
+
+The options `maxTransferDistance` and `minTransferDistance` can be used to ensure that the cursor does not move to another desktop too easily, when moving slowly or when moving very fast. The run conditions can be used to ensure Marionet does not run on untrusted networks. `showTrayIcon` allows for opening the Marionet UI from the system tray if it has been closed. `desktopYOffsets` can be used to vertically align desktops.
 
 ## FAQ
 
