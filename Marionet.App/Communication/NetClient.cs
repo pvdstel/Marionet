@@ -17,7 +17,7 @@ namespace Marionet.App.Communication
         private readonly WorkspaceNetwork workspaceNetwork;
         private readonly ConfigurationSynchronizationService configurationSynchronizationService;
         private readonly ILogger<NetClient> logger;
-        private TaskCompletionSource<object?> connectionTaskCompletionSource;
+        private TaskCompletionSource connectionTaskCompletionSource;
 
         private string? serverName;
 
@@ -36,7 +36,7 @@ namespace Marionet.App.Communication
             if (configurationService == null) throw new ArgumentNullException(nameof(configurationService));
             this.configurationSynchronizationService = configurationSynchronizationService ?? throw new ArgumentNullException(nameof(configurationSynchronizationService));
 
-            connectionTaskCompletionSource = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            connectionTaskCompletionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             this.Disconnected += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(serverName))
@@ -47,7 +47,7 @@ namespace Marionet.App.Communication
             };
             this.ConnectingStarted += (sender, e) =>
             {
-                connectionTaskCompletionSource = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                connectionTaskCompletionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             };
             this.Connected += async (sender, e) =>
             {
@@ -65,7 +65,7 @@ namespace Marionet.App.Communication
                 {
                     supervisor.SetPeerStatus(serverName, Supervisor.PeerConnectionStatuses.IsServer, true);
                 }
-                connectionTaskCompletionSource.TrySetResult(null);
+                connectionTaskCompletionSource.TrySetResult();
             };
         }
 

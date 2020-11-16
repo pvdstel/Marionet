@@ -43,8 +43,8 @@ namespace Marionet.Core.Windows
             cancellation = new CancellationTokenSource();
             var cancellationToken = cancellation.Token;
 
-            TaskCompletionSource<object?> inputStartCompleted = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
-            TaskCompletionSource<object?> applicationStartCompleted = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource inputStartCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource applicationStartCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
             Thread inputThread = new Thread(() =>
             {
@@ -66,7 +66,7 @@ namespace Marionet.Core.Windows
                     Native.Methods.PostThreadMessage(currentThreadId, Native.Constants.WM_QUIT, UIntPtr.Zero, IntPtr.Zero);
                 });
 
-                inputStartCompleted.TrySetResult(null);
+                inputStartCompleted.TrySetResult();
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -136,7 +136,7 @@ namespace Marionet.Core.Windows
                     () => Dispatcher.UIThread.InvokeAsync(unblock)
                 );
 
-                applicationStartCompleted.TrySetResult(null);
+                applicationStartCompleted.TrySetResult();
 
                 if (needsNewApplication)
                 {

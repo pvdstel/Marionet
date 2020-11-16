@@ -19,7 +19,7 @@ namespace Marionet.Core
         private readonly IInputManager inputManager;
         private readonly IConfigurationProvider configurationProvider;
         private readonly string selfName;
-        private readonly TaskCompletionSource<object?> initialized = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource initialized = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private readonly SemaphoreSlim mutableStateLock = new SemaphoreSlim(1, 1);
         private Desktop selfDesktop = default!;
@@ -89,7 +89,7 @@ namespace Marionet.Core
             localState = new LocalState.Uncontrolled(display, primaryDisplay);
             mutableStateLock.Release();
 
-            initialized.TrySetResult(null);
+            initialized.TrySetResult();
         }
 
         private async void OnSystemEvent(object? sender, EventArgs e)
