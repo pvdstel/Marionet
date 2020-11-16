@@ -21,6 +21,7 @@ namespace Marionet.Core
             await mutableStateLock.WaitAsync();
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             string? activeDisplayId = null;
             if (controlling != null)
             {
@@ -39,6 +40,13 @@ namespace Marionet.Core
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
             }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (connect), but state is uncontrolled; updating display to {display}");
+            }
 
             mutableStateLock.Release();
         }
@@ -50,6 +58,7 @@ namespace Marionet.Core
 
             string desktopName = e.DesktopName.NormalizeDesktopName();
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             string? activeDisplayId = null;
             if (controlling != null && controlling.ActiveDesktop.Name != desktopName)
             {
@@ -77,6 +86,13 @@ namespace Marionet.Core
                     await ReturnToPrimaryDisplay();
                 }
             }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (disconnect), but state is uncontrolled; updating display to {display}");
+            }
 
             mutableStateLock.Release();
         }
@@ -94,10 +110,6 @@ namespace Marionet.Core
             {
                 activeDisplayId = displayLayout.DisplayIds[controlling.ActiveDisplay];
             }
-            else if (uncontrolled != null)
-            {
-                activeDisplayId = displayLayout.DisplayIds[uncontrolled.ActiveDisplay];
-            }
 
             DebugMessage("recreating display layout");
             displayLayout = CreateDisplayLayout(e.Desktops);
@@ -111,11 +123,12 @@ namespace Marionet.Core
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
             }
-            else if (uncontrolled != null && activeDisplayId != null)
+            else if (uncontrolled != null)
             {
-                var nextDisplay = displayLayout.DisplayById[activeDisplayId];
-                localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay.GetValueOrDefault());
-                DebugMessage($"detected a global desktop change, but state is uncontrolled; updating desktop to {nextDisplay}");
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (desktop change), but state is uncontrolled; updating display to {display}");
             }
 
             mutableStateLock.Release();
@@ -137,10 +150,6 @@ namespace Marionet.Core
                 if (controlling != null)
                 {
                     activeDisplayId = displayLayout.DisplayIds[controlling.ActiveDisplay];
-                }
-                else if (uncontrolled != null)
-                {
-                    activeDisplayId = displayLayout.DisplayIds[uncontrolled.ActiveDisplay];
                 }
 
                 DebugMessage($"displays for {desktopName} changed");
@@ -164,11 +173,12 @@ namespace Marionet.Core
                         await ReturnToPrimaryDisplay();
                     }
                 }
-                else if (uncontrolled != null && activeDisplayId != null)
+                else if (uncontrolled != null)
                 {
-                    var nextDisplay = displayLayout.DisplayById[activeDisplayId];
-                    localState = new LocalState.Uncontrolled(nextDisplay, selfDesktop.PrimaryDisplay.GetValueOrDefault());
-                    DebugMessage($"received a client display change, but state is uncontrolled; updating desktop to {nextDisplay}");
+                    localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                    var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                    localState = new LocalState.Uncontrolled(display, display);
+                    DebugMessage($"detected a global desktop change (client display change), but state is uncontrolled; updating display to {display}");
                 }
             }
 
@@ -182,6 +192,7 @@ namespace Marionet.Core
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
             string? activeDisplayId = null;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             if (controlling != null)
             {
                 activeDisplayId = displayLayout.DisplayIds[controlling.ActiveDisplay];
@@ -204,6 +215,13 @@ namespace Marionet.Core
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 DebugMessage(controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY).ToString());
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
+            }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (local display change), but state is uncontrolled; updating display to {display}");
             }
 
             mutableStateLock.Release();
