@@ -68,6 +68,13 @@ namespace Marionet.UI.ViewModels
 
         public ConfigurationService ConfigurationService { get; private set; }
 
+#if DEBUG
+        public static bool IsDebug => true;
+#else
+        public static bool IsDebug => false;
+#endif
+
+
         public bool IsSupervisorRunning
         {
             get => isSupervisorRunning;

@@ -88,6 +88,14 @@
                     Fill="{DynamicResource OffBrush}" />
                 <TextBlock Text="The Marionet host is not active." />
             </WrapPanel>
+            <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsDebug, Mode=OneTime}">
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Margin="3,0,13,0"
+                    Fill="{DynamicResource DisabledBrush}" />
+                <TextBlock Text="This is a debug build of Marionet." />
+            </WrapPanel>
         </StackPanel>
 
         <WrapPanel Grid.Row="1" Margin="10">

@@ -11,6 +11,10 @@ namespace Marionet.App
             var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
             Console.WriteLine($"Marionet {appVersion}");
 
+#if DEBUG
+            Console.WriteLine("This is a debug version of Marionet.");
+#endif
+
             await Supervisor.Initialize();
             await Supervisor.StartAsync(args);
         }
