@@ -6,7 +6,7 @@
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <ApplicationIcon></ApplicationIcon>
     <Authors>pvdstel</Authors>
-    <Version>0.3.1</Version>
+    <Version>0.5.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>

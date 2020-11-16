@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <Authors>pvdstel</Authors>
-    <Version>0.3.1</Version>
+    <Version>0.5.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
