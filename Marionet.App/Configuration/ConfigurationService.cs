@@ -16,7 +16,11 @@ namespace Marionet.App.Configuration
         public static readonly Config DefaultConfiguration = new Config();
         private static readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
 
-        private readonly JsonSerializerOptions jsonSerializerOptions;
+        private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
+            AllowTrailingCommas = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+        };
         private readonly FileSystemWatcher settingsFileWatcher;
         private CancellationTokenSource? reloadEventCancellation;
         private bool disposedValue;
@@ -27,8 +31,6 @@ namespace Marionet.App.Configuration
             {
                 Directory.CreateDirectory(ConfigurationDirectory);
             }
-
-            jsonSerializerOptions = new JsonSerializerOptions() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
             settingsFileWatcher = new FileSystemWatcher(ConfigurationDirectory)
             {
