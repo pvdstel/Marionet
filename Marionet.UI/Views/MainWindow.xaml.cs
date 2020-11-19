@@ -21,25 +21,29 @@ namespace Marionet.UI.Views
         {
             DataContext = vm;
             InitializeComponent();
-            VerifyConfigLoaded();
 
-            vm.ExitTriggered += OnViewModelExitTriggered;
-
-            Closing += (sender, e) =>
+            if (!Design.IsDesignMode)
             {
-                if (vm.PreventClose)
+                VerifyConfigLoaded();
+
+                vm.ExitTriggered += OnViewModelExitTriggered;
+
+                Closing += (sender, e) =>
                 {
-                    e.Cancel = true;
-                    Hide();
+                    if (vm.PreventClose)
+                    {
+                        e.Cancel = true;
+                        Hide();
+                    }
+                };
+
+                if (Program.InvariantArgs.Contains("START"))
+                {
+                    _ = Supervisor.StartAsync();
                 }
-            };
 
-            if (Program.InvariantArgs.Contains("START"))
-            {
-                _ = Supervisor.StartAsync();
+                SetUpTrayIcon();
             }
-
-            SetUpTrayIcon();
         }
 
         private void InitializeComponent()
