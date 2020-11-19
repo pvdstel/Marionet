@@ -2,6 +2,7 @@
 using Marionet.Core.Input;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -12,20 +13,21 @@ namespace Marionet.Core
 {
     public partial class Workspace : IDisposable
     {
+        private const int InputManagerStartTimeout = 10000;
+
         private readonly IWorkspaceNetwork workspaceNetwork;
         private readonly IInputManager inputManager;
         private readonly IConfigurationProvider configurationProvider;
         private readonly string selfName;
-        private readonly TaskCompletionSource<object?> initialized = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource initialized = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private readonly SemaphoreSlim mutableStateLock = new SemaphoreSlim(1, 1);
         private Desktop selfDesktop = default!;
-        private List<Desktop> desktops = default!;
+        private HashSet<Desktop> connectedDesktops = default!;
         private DisplayLayout displayLayout = default!;
         private LocalState.State localState = default!;
         private Point localCursorPosition;
-        private int mouseDeltaDebounceValueX;
-        private int mouseDeltaDebounceValueY;
+        private Point mouseDeltaDebounceValue;
 
         public Workspace(WorkspaceSettings settings)
         {
@@ -34,10 +36,10 @@ namespace Marionet.Core
                 throw new ArgumentNullException(nameof(settings));
             }
 
-            this.workspaceNetwork = settings.WorkspaceNetwork ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.WorkspaceNetwork) + " cannot be null.");
-            this.inputManager = settings.InputManager ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.InputManager) + " cannot be null.");
-            this.configurationProvider = settings.ConfigurationProvider ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.ConfigurationProvider) + " cannot be null.");
-            this.selfName = configurationProvider.GetSelfName();
+            workspaceNetwork = settings.WorkspaceNetwork ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.WorkspaceNetwork) + " cannot be null.");
+            inputManager = settings.InputManager ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.InputManager) + " cannot be null.");
+            configurationProvider = settings.ConfigurationProvider ?? throw new NullReferenceException(nameof(settings) + "." + nameof(settings.ConfigurationProvider) + " cannot be null.");
+            selfName = configurationProvider.GetSelfName();
 
             workspaceNetwork.ClientConnected += OnClientConnected;
             workspaceNetwork.ClientDisconnected += OnClientDisconnected;
@@ -68,24 +70,29 @@ namespace Marionet.Core
 
         public async Task Initialize()
         {
-            await inputManager.StartAsync();
+            var inputManagerStartTask = inputManager.StartAsync();
+            if (await Task.WhenAny(inputManagerStartTask, Task.Delay(InputManagerStartTimeout)) != inputManagerStartTask)
+            {
+                throw new TimeoutException($"The input manager instance was unable to start within the {InputManagerStartTimeout} ms timeout window.");
+            }
+
             localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
 
             await mutableStateLock.WaitAsync();
-            selfDesktop = new Desktop() { Name = selfName, Displays = inputManager.DisplayAdapter.GetDisplays(), PrimaryDisplay = inputManager.DisplayAdapter.GetPrimaryDisplay() };
-            mouseDeltaDebounceValueX = selfDesktop.PrimaryDisplay.Value.Width / 3;
-            mouseDeltaDebounceValueY = selfDesktop.PrimaryDisplay.Value.Height / 3;
-            desktops = new List<Desktop>() { selfDesktop };
-            displayLayout = new DisplayLayout(desktops);
+            var primaryDisplay = inputManager.DisplayAdapter.GetPrimaryDisplay();
+            selfDesktop = new Desktop(selfName, inputManager.DisplayAdapter.GetDisplays(), primaryDisplay);
+            mouseDeltaDebounceValue = new Point(primaryDisplay.Width / 3, primaryDisplay.Height / 3);
+            connectedDesktops = new HashSet<Desktop>() { selfDesktop };
+            displayLayout = new DisplayLayout(connectedDesktops, configurationProvider.GetDesktopYOffsets());
 
             var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
-            localState = new LocalState.Uncontrolled(display, selfDesktop.PrimaryDisplay.Value);
+            localState = new LocalState.Uncontrolled(display, primaryDisplay);
             mutableStateLock.Release();
 
-            initialized.TrySetResult(null);
+            initialized.TrySetResult();
         }
 
-        private async void OnSystemEvent(object sender, EventArgs e)
+        private async void OnSystemEvent(object? sender, EventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -104,7 +111,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnControlAssumed(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnControlAssumed(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -121,25 +128,18 @@ namespace Marionet.Core
                 }
             }
 
-            HashSet<string> by;
-            if (localState is LocalState.Controlled controlled)
-            {
-                by = new HashSet<string>(controlled.By);
-            }
-            else
-            {
-                by = new HashSet<string>();
-            }
             DebugMessage($"adding {desktopName} to controlled by");
-            by.Add(desktopName);
-            localState = new LocalState.Controlled(by);
+            ImmutableHashSet<string> nextBy = localState is LocalState.Controlled controlled
+                ? controlled.By.Add(desktopName)
+                : ImmutableHashSet<string>.Empty.Add(desktopName);
+            localState = new LocalState.Controlled(nextBy);
             DebugMessage("unblocking local input");
-            inputManager.BlockInput(false);
+            await inputManager.BlockInput(false);
 
             mutableStateLock.Release();
         }
 
-        private async void OnControlRelinquished(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnControlRelinquished(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -148,14 +148,13 @@ namespace Marionet.Core
 
             if (localState is LocalState.Controlled controlled)
             {
-                HashSet<string> by = new HashSet<string>(controlled.By);
-                by.Remove(desktopName);
+                ImmutableHashSet<string> by = controlled.By.Remove(desktopName);
                 if (by.Count == 0)
                 {
                     DebugMessage("no controllers left, becoming relinquished");
                     localState = new LocalState.Relinquished();
                     DebugMessage("blocking local input");
-                    inputManager.BlockInput(true);
+                    await inputManager.BlockInput(true);
                 }
                 else
                 {
@@ -167,7 +166,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnClientResignedFromControl(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnClientResignedFromControl(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -198,9 +197,9 @@ namespace Marionet.Core
         private Task EnsureInitialized() => initialized.Task;
 
         [Conditional("DEBUG")]
-        private static void DebugMessage(string message, [CallerMemberName] string source = "")
+        private static void DebugMessage(string message, [CallerMemberName] string source = "", bool condition = true)
         {
-            Debug.WriteLine($"{source}: {message}");
+            if (condition) Debug.WriteLine($"{source}: {message}");
         }
 
         [Conditional("DEBUG")]
@@ -219,8 +218,6 @@ namespace Marionet.Core
             {
                 if (disposing)
                 {
-                    mutableStateLock.Dispose();
-
                     workspaceNetwork.ClientConnected -= OnClientConnected;
                     workspaceNetwork.ClientDisconnected -= OnClientDisconnected;
                     workspaceNetwork.ClientDisplaysChanged -= OnClientDisplaysChanged;
@@ -246,6 +243,9 @@ namespace Marionet.Core
                     inputManager.KeyboardListener.KeyboardButtonPressed -= OnKeyboardButtonPressed;
                     inputManager.KeyboardListener.KeyboardButtonReleased -= OnKeyboardButtonReleased;
                     inputManager.SystemEvent -= OnSystemEvent;
+
+                    // Must happen after events are unsubscribed; they might still trigger otherwise.
+                    mutableStateLock.Dispose();
                 }
 
                 disposedValue = true;

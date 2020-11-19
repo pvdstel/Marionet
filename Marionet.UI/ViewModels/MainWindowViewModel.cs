@@ -4,6 +4,7 @@ using Marionet.App.Configuration;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
@@ -26,6 +27,9 @@ namespace Marionet.UI.ViewModels
 
         public MainWindowViewModel()
         {
+            ConfigurationService = new ConfigurationService();
+            ConfigurationService.Load().Wait();
+
             StartSupervisorCommand = ReactiveCommand.Create(StartSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && !v && c));
             StopSupervisorCommand = ReactiveCommand.Create(StopSupervisor, this.WhenAnyValue(x => x.IsSupervisorRunning, x => x.PreventClose, x => x.IsWaiting, (v, c, w) => !w && v && c));
             MoveSelectedHostUpCommand = ReactiveCommand.Create<string>(MoveSelectedHostUp, this.WhenAnyValue(x => x.KnownHosts, x => x.SelectedHost, x => x.IsWaiting, (k, s, w) => !w && !string.IsNullOrEmpty(s) && k.IndexOf(s) > 0));
@@ -44,13 +48,13 @@ namespace Marionet.UI.ViewModels
             Supervisor.RunningAllowedUpdated += OnSupervisorRunningAllowedUpdated;
             Supervisor.HostRunningUpdated += OnHostRunningUpdated;
             Supervisor.PeerStatusesUpdated += OnPeerStatusesUpdated;
-            Config.SettingsReloaded += OnSettingsReloaded;
+            ConfigurationService.ConfigurationChanged += OnConfigurationChanged;
 
-            IsSupervisorRunning = Supervisor.Running;
+            IsSupervisorRunning = Supervisor.SupervisorActive;
             IsRunningAllowed = Supervisor.RunningAllowed;
             IsHostRunning = Supervisor.HostRunning;
-            SelfName = Config.Instance.Self;
-            KnownHosts = Config.Instance.Desktops.ToList();
+            SelfName = ConfigurationService.Configuration.Self;
+            KnownHosts = ConfigurationService.Configuration.Desktops.ToList();
             PeerStatuses = GetPeerStatuses();
 
             var systemPermissions = PlatformSelector.GetSystemPersmissions();
@@ -61,7 +65,16 @@ namespace Marionet.UI.ViewModels
         public event EventHandler? ExitTriggered;
 
         public string AppVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
-        
+
+        public ConfigurationService ConfigurationService { get; private set; }
+
+#if DEBUG
+        public static bool IsDebug => true;
+#else
+        public static bool IsDebug => false;
+#endif
+
+
         public bool IsSupervisorRunning
         {
             get => isSupervisorRunning;
@@ -161,7 +174,7 @@ namespace Marionet.UI.ViewModels
 
         public ReactiveCommand<Unit, Unit> ExitApplicationCommand { get; }
 
-        private List<PeerStatus> GetPeerStatuses() =>
+        private static List<PeerStatus> GetPeerStatuses() =>
             Supervisor.PeerStatuses.Select(kvp => new PeerStatus(
                 kvp.Key,
                 kvp.Value.HasFlag(Supervisor.PeerConnectionStatuses.IsClient),
@@ -183,35 +196,31 @@ namespace Marionet.UI.ViewModels
         private void MoveSelectedHostUp(string which)
         {
             IsWaiting = false;
-            List<string> next = Config.Instance.Desktops.ToList();
-            int index = next.IndexOf(which);
+            ImmutableList<string> current = ConfigurationService.Configuration.Desktops;
+            int index = current.IndexOf(which);
             if (index > 0)
             {
-                next.RemoveAt(index);
-                next.Insert(index - 1, which);
+                var next = current.RemoveAt(index).Insert(index - 1, which);
+                _ = ConfigurationService.Update(ConfigurationService.Configuration with { Desktops = next });
             }
-            Config.Instance.Desktops = next;
-            _ = Config.Save();
         }
 
         private void MoveSelectedHostDown(string which)
         {
             IsWaiting = false;
-            List<string> next = Config.Instance.Desktops.ToList();
-            int index = next.IndexOf(which);
-            if (index >= 0 && index < next.Count - 1)
+            ImmutableList<string> current = ConfigurationService.Configuration.Desktops;
+            int index = current.IndexOf(which);
+            if (index >= 0 && index < current.Count - 1)
             {
-                next.RemoveAt(index);
-                next.Insert(index + 1, which);
+                var next = current.RemoveAt(index).Insert(index + 1, which);
+                _ = ConfigurationService.Update(ConfigurationService.Configuration with { Desktops = next });
             }
-            Config.Instance.Desktops = next;
-            _ = Config.Save();
         }
 
         private void OpenSettingsFile()
         {
             using Process process = new Process();
-            process.StartInfo.FileName = App.Configuration.Config.ConfigurationFile;
+            process.StartInfo.FileName = ConfigurationService.ConfigurationFile;
             process.StartInfo.UseShellExecute = true;
             process.Start();
         }
@@ -219,7 +228,7 @@ namespace Marionet.UI.ViewModels
         private void OpenSettingsDirectory()
         {
             using Process process = new Process();
-            process.StartInfo.FileName = App.Configuration.Config.ConfigurationDirectory;
+            process.StartInfo.FileName = ConfigurationService.ConfigurationDirectory;
             process.StartInfo.UseShellExecute = true;
             process.Start();
         }
@@ -280,12 +289,12 @@ namespace Marionet.UI.ViewModels
             });
         }
 
-        private void OnSettingsReloaded(object? sender, EventArgs e)
+        private void OnConfigurationChanged(object? sender, EventArgs e)
         {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                SelfName = Config.Instance.Self;
-                KnownHosts = Config.Instance.Desktops.ToList();
+                SelfName = ConfigurationService.Configuration.Self;
+                KnownHosts = ConfigurationService.Configuration.Desktops.ToList();
                 IsWaiting = false;
             });
         }
@@ -303,6 +312,9 @@ namespace Marionet.UI.ViewModels
                     Supervisor.Stopped -= OnSupervisorStopped;
                     Supervisor.RunningAllowedUpdated -= OnSupervisorRunningAllowedUpdated;
                     Supervisor.PeerStatusesUpdated -= OnPeerStatusesUpdated;
+
+                    ConfigurationService.Dispose();
+                    ConfigurationService = null!;
                 }
 
                 disposedValue = true;

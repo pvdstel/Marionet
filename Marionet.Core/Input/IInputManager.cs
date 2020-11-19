@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Marionet.Core.Input
@@ -23,6 +21,6 @@ namespace Marionet.Core.Input
 
         Task StopAsync();
 
-        void BlockInput(bool blocked);
+        Task BlockInput(bool blocked);
     }
 }

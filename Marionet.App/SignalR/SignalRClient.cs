@@ -1,6 +1,5 @@
 ﻿using Marionet.App.Configuration;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
@@ -16,26 +15,32 @@ namespace Marionet.App.SignalR
         where T : new()
     {
         private readonly HubConnection connection;
-        private Uri uri;
-        private ILogger<SignalRClient<T>> logger;
+        private readonly Uri uri;
+        private readonly ILogger<SignalRClient<T>> logger;
         private bool retry = false;
+        private CancellationToken connectCancellationToken = default;
 
-        public SignalRClient(Uri uri, ILogger<SignalRClient<T>> logger)
+        public SignalRClient(
+            Uri uri,
+            ConfigurationService configurationService,
+            ILogger<SignalRClient<T>> logger)
         {
-            this.uri = uri;
-            this.logger = logger;
+            this.uri = uri ?? throw new ArgumentNullException(nameof(uri));
+            if (configurationService == null) throw new ArgumentNullException(nameof(configurationService));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            
             connection = new HubConnectionBuilder()
-                .AddMessagePackProtocol()
+                //.AddMessagePackProtocol()
                 .WithUrl(uri, options =>
                     {
                         options.WebSocketConfiguration = o =>
                         {
-                            o.ClientCertificates.Add(Certificate.ClientCertificate);
+                            o.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
                             o.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
                             {
                                 if (certificate is X509Certificate2 certificate2)
                                 {
-                                    return Certificate.IsParent(Certificate.ServerCertificate, certificate2);
+                                    return configurationService.CertificateManagement.IsValidClientCertificate(certificate2);
                                 }
                                 else
                                 {
@@ -43,13 +48,13 @@ namespace Marionet.App.SignalR
                                 }
                             };
                         };
-                        options.ClientCertificates.Add(Certificate.ClientCertificate);
+                        options.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
                         options.HttpMessageHandlerFactory = message =>
                         {
                             if (message is HttpClientHandler clientHandler)
                             {
-                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => Certificate.IsParent(Certificate.ServerCertificate, certificate);
-                                clientHandler.ClientCertificates.Add(Certificate.ClientCertificate);
+                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => certificate != null && configurationService.CertificateManagement.IsValidServerCertificate(certificate);
+                                clientHandler.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
                             }
                             return message;
                         };
@@ -59,10 +64,10 @@ namespace Marionet.App.SignalR
             {
                 logger.LogWarning($"Connection to {uri} closed");
                 Disconnected?.Invoke(this, new EventArgs());
-                if (retry)
+                if (retry && !connectCancellationToken.IsCancellationRequested)
                 {
                     logger.LogDebug($"Reconnecting to {uri}...");
-                    await Connect();
+                    await Connect(connectCancellationToken);
                 }
                 else
                 {
@@ -79,33 +84,36 @@ namespace Marionet.App.SignalR
         public event EventHandler? Connected;
         public event EventHandler? Disconnected;
 
-        public async Task Connect(CancellationToken cancellationToken = default)
+        public async Task Connect(CancellationToken cancellationToken)
         {
             retry = true;
+            connectCancellationToken = cancellationToken;
             int cooldown = 1000;
             ConnectingStarted?.Invoke(this, new EventArgs());
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    cancellationToken.Register(CancelConnection);
-                    logger.LogInformation($"Connecting to {uri}...");
-                    await connection.StartAsync(cancellationToken);
-                    logger.LogInformation($"Connected to {uri}");
-                    Connected?.Invoke(this, new EventArgs());
-                    return;
-                }
-                catch (HttpRequestException)
-                {
-                    logger.LogWarning($"Connection to {uri} failed. Waiting {cooldown} ms before retrying");
-                    await Task.Delay(cooldown);
-                    cooldown = Math.Min(60000, cooldown * 2);
+                    try
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        cancellationToken.Register(CancelConnection);
+                        logger.LogInformation($"Connecting to {uri}...");
+                        await connection.StartAsync(cancellationToken);
+                        logger.LogInformation($"Connected to {uri}");
+                        Connected?.Invoke(this, new EventArgs());
+                        return;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        logger.LogWarning($"Connection to {uri} failed. Waiting {cooldown} ms before retrying");
+                        await Task.Delay(cooldown, cancellationToken);
+                        cooldown = Math.Min(60000, cooldown * 2);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
                     logger.LogDebug($"Connection to {uri} aborted");
-                    break;
                 }
             }
         }

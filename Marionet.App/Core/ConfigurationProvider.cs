@@ -1,14 +1,28 @@
-﻿using Marionet.Core;
-using System.Collections.Generic;
+﻿using Marionet.App.Configuration;
+using Marionet.Core;
+using System.Collections.Immutable;
 
 namespace Marionet.App.Core
 {
     public class ConfigurationProvider : IConfigurationProvider
     {
-        public List<string> GetDesktopOrder() => Configuration.Config.Instance.Desktops;
+        private readonly ConfigurationService configurationService;
 
-        public string GetSelfName() => Configuration.Config.Instance.Self;
+        public ConfigurationProvider(ConfigurationService configurationService)
+        {
+            this.configurationService = configurationService;
+        }
 
-        public int GetStickyCornerSize() => Configuration.Config.Instance.StickyCornerSize;
+        public bool GetBlockTransferWhenButtonPressed() => configurationService.Configuration.BlockTransferWhenButtonPressed;
+
+        public ImmutableList<string> GetDesktopOrder() => configurationService.Configuration.Desktops;
+
+        public ImmutableDictionary<string, int> GetDesktopYOffsets() => configurationService.Configuration.DesktopYOffsets;
+
+        public string GetSelfName() => configurationService.Configuration.Self;
+
+        public int GetStickyCornerSize() => configurationService.Configuration.StickyCornerSize;
+
+        public (int, int) GetTransferDistance() => (configurationService.Configuration.MinTransferDistance, configurationService.Configuration.MaxTransferDistance);
     }
 }

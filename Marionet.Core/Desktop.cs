@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace Marionet.Core
 {
-    public class Desktop
+    public record Desktop(string Name, ImmutableList<Rectangle> Displays, Rectangle? PrimaryDisplay)
     {
-        public string Name { get; set; } = string.Empty;
-
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Should be replaceable.")]
-        public List<Rectangle> Displays { get; set; } = new List<Rectangle>();
-
-        public Rectangle? PrimaryDisplay { get; set; }
+        public Desktop(string Name) : this(Name, ImmutableList<Rectangle>.Empty, null) { }
 
         public override string ToString()
         {
-            return $"Desktop({Name})";
+            return Name;
         }
     }
 }

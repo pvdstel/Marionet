@@ -1,0 +1,54 @@
+﻿<Window
+    x:Class="Marionet.UI.Views.ErrorMessageWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Marionet"
+    Width="600"
+    Height="400"
+    CanResize="False"
+    Icon="/Assets/logo.ico"
+    ShowInTaskbar="False"
+    Topmost="True"
+    mc:Ignorable="d">
+    <Grid Margin="16,16,16,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="0,0,0,16"
+            FontSize="24"
+            FontWeight="SemiBold">
+            An error has occurred
+        </TextBlock>
+        <TextBlock
+            Grid.Row="1"
+            Margin="0,0,0,16"
+            TextWrapping="WrapWithOverflow">
+            An error has occurred in Marionet. It is recommended that you terminate Marionet to prevent future errors. You may also choose to continue execution. The error is displayed below.
+        </TextBlock>
+        <ScrollViewer
+            Grid.Row="2"
+            Margin="0,0,0,16"
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollBarVisibility="Auto">
+            <TextBlock
+                x:Name="detailsText"
+                FontFamily="Consolas"
+                TextWrapping="NoWrap" />
+        </ScrollViewer>
+
+        <WrapPanel Grid.Row="3" Orientation="Horizontal">
+            <Button Margin="0,0,16,16" Click="OnExitButtonClick">
+                Terminate
+            </Button>
+            <Button Margin="0,0,16,16" Click="OnCloseButtonClick">
+                Close and continue
+            </Button>
+        </WrapPanel>
+    </Grid>
+</Window>

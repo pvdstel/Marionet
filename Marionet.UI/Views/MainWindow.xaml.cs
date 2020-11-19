@@ -1,33 +1,82 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Shared.PlatformSupport;
+using Avalonia.Threading;
+using Marionet.App;
+using Marionet.UI.Native.Windows;
 using Marionet.UI.ViewModels;
 using System;
+using System.Drawing;
+using System.IO;
+using System.Reflection;
 
 namespace Marionet.UI.Views
 {
     public class MainWindow : Window, IDisposable
     {
-        MainWindowViewModel vm = new MainWindowViewModel();
+        private readonly MainWindowViewModel vm = new MainWindowViewModel();
+        private BasicNotifyIcon? notifyIcon;
+        private Icon? trayIconImage;
 
         public MainWindow()
         {
             DataContext = vm;
             InitializeComponent();
 
-            vm.ExitTriggered += OnViewModelExitTriggered;
-
-            Closing += (sender, e) =>
+            if (!Design.IsDesignMode)
             {
-                if (vm.PreventClose)
+                VerifyConfigLoaded();
+
+                vm.ExitTriggered += OnViewModelExitTriggered;
+
+                Closing += (sender, e) =>
                 {
-                    e.Cancel = true;
-                    Hide();
+                    if (vm.PreventClose)
+                    {
+                        e.Cancel = true;
+                        Hide();
+                    }
+                };
+
+                if (Program.InvariantArgs.Contains("START"))
+                {
+                    _ = Supervisor.StartAsync();
                 }
-            };
-#if DEBUG
-            this.AttachDevTools();
-#endif
+
+                SetUpTrayIcon();
+            }
+        }
+
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
+
+        private void SetUpTrayIcon()
+        {
+            if (BasicNotifyIcon.IsSupported())
+            {
+                Assembly uiAssembly = Assembly.GetExecutingAssembly();
+                AssetLoader assetLoader = new AssetLoader(uiAssembly);
+                using Stream? iconStream = assetLoader.Open(new Uri("avares://Marionet.UI/Assets/logo.ico"));
+                trayIconImage = new Icon(iconStream);
+                notifyIcon = new BasicNotifyIcon(trayIconImage)
+                {
+                    Text = "Marionet",
+                    Visible = vm.ConfigurationService.Configuration.ShowTrayIcon
+                };
+                notifyIcon.Clicked += OnNotifyIconClicked;
+            }
+
+            vm.ConfigurationService.ConfigurationChanged += OnConfigurationChanged;
+        }
+
+        private void VerifyConfigLoaded()
+        {
+            if (!Design.IsDesignMode && vm.ConfigurationService.LastConfigurationLoadError != null)
+            {
+                new ErrorMessageWindow(vm.ConfigurationService.LastConfigurationLoadError.ToString()).ShowDialogSync(this);
+            }
         }
 
         private void OnViewModelExitTriggered(object? sender, EventArgs e)
@@ -35,15 +84,27 @@ namespace Marionet.UI.Views
             Close();
         }
 
-        protected override void OnClosed(EventArgs e)
+        private void OnNotifyIconClicked(object? sender, EventArgs e)
         {
-            vm.ExitTriggered -= OnViewModelExitTriggered;
-            base.OnClosed(e);
+            Show();
         }
 
-        private void InitializeComponent()
+        private void OnConfigurationChanged(object? sender, EventArgs e)
         {
-            AvaloniaXamlLoader.Load(this);
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                VerifyConfigLoaded();
+                if (notifyIcon != null)
+                {
+                    notifyIcon.Visible = vm.ConfigurationService.Configuration.ShowTrayIcon;
+                }
+            });
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            Dispose(true);
+            base.OnClosed(e);
         }
 
         #region IDisposable Support
@@ -55,6 +116,15 @@ namespace Marionet.UI.Views
             {
                 if (disposing)
                 {
+                    vm.ExitTriggered -= OnViewModelExitTriggered;
+                    vm.ConfigurationService.ConfigurationChanged -= OnConfigurationChanged;
+
+                    if (notifyIcon != null)
+                    {
+                        notifyIcon.Clicked -= OnNotifyIconClicked;
+                        notifyIcon.Dispose();
+                    }
+                    trayIconImage?.Dispose();
                     vm.Dispose();
                 }
 

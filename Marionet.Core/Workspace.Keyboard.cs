@@ -5,7 +5,7 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
-        private async void OnKeyboardButtonPressed(object sender, KeyboardButtonActionEventArgs e)
+        private async void OnKeyboardButtonPressed(object? sender, KeyboardButtonActionEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -22,7 +22,7 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnKeyboardButtonReleased(object sender, KeyboardButtonActionEventArgs e)
+        private async void OnKeyboardButtonReleased(object? sender, KeyboardButtonActionEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
@@ -44,28 +44,42 @@ namespace Marionet.Core
             mutableStateLock.Release();
         }
 
-        private async void OnPressKeyboardButtonReceived(object sender, KeyboardButtonActionReceivedEventArgs e)
+        private async void OnPressKeyboardButtonReceived(object? sender, KeyboardButtonActionReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
             string desktopName = e.From.NormalizeDesktopName();
-            if (localState is LocalState.Controlled controlled && controlled.By.Contains(desktopName))
+            if (localState is LocalState.Controlled controlled)
             {
-                DebugMessage($"{e.KeyCode} from {e.From}");
-                await inputManager.KeyboardController.PressKeyboardButton(e.KeyCode);
+                if (controlled.By.Contains(desktopName))
+                {
+                    DebugMessage($"{e.KeyCode} from {e.From}");
+                    await inputManager.KeyboardController.PressKeyboardButton(e.KeyCode);
+                }
+                else
+                {
+                    DebugMessage($"received a key press event but {desktopName} is not in the controlled-by set");
+                }
             }
             mutableStateLock.Release();
         }
 
-        private async void OnReleaseKeyboardButtonReceived(object sender, KeyboardButtonActionReceivedEventArgs e)
+        private async void OnReleaseKeyboardButtonReceived(object? sender, KeyboardButtonActionReceivedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
             string desktopName = e.From.NormalizeDesktopName();
-            if (localState is LocalState.Controlled controlled && controlled.By.Contains(desktopName))
+            if (localState is LocalState.Controlled controlled)
             {
-                DebugMessage($"{e.KeyCode} from {e.From}");
-                await inputManager.KeyboardController.ReleaseKeyboardButton(e.KeyCode);
+                if (controlled.By.Contains(desktopName))
+                {
+                    DebugMessage($"{e.KeyCode} from {e.From}");
+                    await inputManager.KeyboardController.ReleaseKeyboardButton(e.KeyCode);
+                }
+                else
+                {
+                    DebugMessage($"received a key press event but {desktopName} is not in the controlled-by set");
+                }
             }
             mutableStateLock.Release();
         }

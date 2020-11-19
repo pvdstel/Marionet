@@ -1,36 +1,34 @@
-﻿using System.Threading.Channels;
-using System.Windows.Forms;
+﻿using Avalonia.Win32;
+using System;
+using System.Threading.Channels;
 
 namespace Marionet.Core.Windows
 {
-    internal class MessageWindow : Form
+    internal class MessageWindow : WindowImpl
     {
         private readonly ChannelWriter<Native.DisplayChannelMessage> displayChannelWriter;
 
         public MessageWindow(ChannelWriter<Native.DisplayChannelMessage> displayChannelWriter)
         {
             this.displayChannelWriter = displayChannelWriter;
-            this.Text = "Marionet Message Window";
-            this.ShowInTaskbar = false;
-            this.WindowState = FormWindowState.Minimized;
+            this.SetTitle("Marionet Message Window");
+            this.ShowTaskbarIcon(false);
+            this.WindowState = Avalonia.Controls.WindowState.Minimized;
 
-            this.CreateHandle();
+            this.Handle.Handle.ToInt64(); // ensure the handle exists
         }
 
-        protected override void SetVisibleCore(bool value)
-        {
-            base.SetVisibleCore(false);
-        }
+        public override void Show() { }
 
-
-        protected override void WndProc(ref Message m)
+        protected override IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
-            if (m.Msg == Native.Constants.WM_DISPLAYCHANGE)
+            if (msg == Native.Constants.WM_DISPLAYCHANGE)
             {
-                displayChannelWriter.TryWrite(new Native.DisplayChannelMessage { wParam = (uint)m.WParam, lParam = (uint)m.LParam });
+                displayChannelWriter.TryWrite(new Native.DisplayChannelMessage { wParam = (uint)wParam, lParam = (uint)lParam });
             }
 
-            base.WndProc(ref m);
+            return base.WndProc(hWnd, msg, wParam, lParam);
         }
+
     }
 }

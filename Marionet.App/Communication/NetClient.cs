@@ -1,11 +1,12 @@
-﻿using Marionet.App.Core;
+﻿using Marionet.App.Configuration;
+using Marionet.App.Core;
 using Marionet.App.SignalR;
 using Marionet.Core;
 using Marionet.Core.Input;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,16 +15,28 @@ namespace Marionet.App.Communication
     public class NetClient : SignalRClient<NetHubInterface>, INetClient
     {
         private readonly WorkspaceNetwork workspaceNetwork;
+        private readonly ConfigurationSynchronizationService configurationSynchronizationService;
         private readonly ILogger<NetClient> logger;
-        private TaskCompletionSource<object?> connectionTaskCompletionSource;
+        private TaskCompletionSource connectionTaskCompletionSource;
 
         private string? serverName;
 
-        public NetClient(Uri uri, ILogger<NetClient> logger, IInputManager inputManager, WorkspaceNetwork workspaceNetwork, Supervisor supervisor) : base(uri, logger)
+        public NetClient(
+            Uri uri,
+            WorkspaceNetwork workspaceNetwork,
+            ConfigurationService configurationService,
+            ConfigurationSynchronizationService configurationSynchronizationService,
+            ILogger<NetClient> logger,
+            IInputManager inputManager,
+            Supervisor supervisor
+            ) : base(uri, configurationService, logger)
         {
-            this.logger = logger;
-            this.workspaceNetwork = workspaceNetwork;
-            connectionTaskCompletionSource = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.workspaceNetwork = workspaceNetwork ?? throw new ArgumentNullException(nameof(workspaceNetwork));
+            if (configurationService == null) throw new ArgumentNullException(nameof(configurationService));
+            this.configurationSynchronizationService = configurationSynchronizationService ?? throw new ArgumentNullException(nameof(configurationSynchronizationService));
+
+            connectionTaskCompletionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             this.Disconnected += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(serverName))
@@ -34,25 +47,25 @@ namespace Marionet.App.Communication
             };
             this.ConnectingStarted += (sender, e) =>
             {
-                connectionTaskCompletionSource = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                connectionTaskCompletionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             };
             this.Connected += async (sender, e) =>
             {
-                var serverIdentity = await Hub.Identify(Configuration.Config.Instance.Self, Configuration.Config.Instance.Desktops);
+                var serverIdentity = await Hub.Identify(configurationService.Configuration.Self, configurationService.Configuration.Desktops);
                 if (!serverIdentity.IsValid())
                 {
                     throw new InvalidOperationException("The server provided invalid identification data.");
                 }
 
                 serverName = serverIdentity.DesktopName;
-                await Configuration.Desktop.AddFromServer(serverIdentity.Desktops!);
+                await configurationService.DesktopManagement.AddFromServer(serverIdentity.Desktops!.ToImmutableList(), serverIdentity.DesktopYOffsets!.ToImmutableDictionary());
 
-                await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays().ToList());
+                await Hub.ChangeDisplays(inputManager.DisplayAdapter.GetDisplays());
                 if (!string.IsNullOrEmpty(serverName))
                 {
                     supervisor.SetPeerStatus(serverName, Supervisor.PeerConnectionStatuses.IsServer, true);
                 }
-                connectionTaskCompletionSource.TrySetResult(null);
+                connectionTaskCompletionSource.TrySetResult();
             };
         }
 
@@ -142,7 +155,13 @@ namespace Marionet.App.Communication
         {
             if (await WaitForName())
             {
-                workspaceNetwork.ChangeDisplays(serverName!, displays);
+                if (displays == null)
+                {
+                    logger.LogError($"Received a null list of displays from server {serverName}");
+                    return;
+                }
+
+                workspaceNetwork.ChangeDisplays(serverName!, displays.ToImmutableList());
             }
         }
 
@@ -156,9 +175,9 @@ namespace Marionet.App.Communication
         }
 
         [HubCallable]
-        public async Task DesktopsUpdated(List<string> desktopNames)
+        public async Task UpdateSynchronizedConfiguration(SynchronizedConfig config)
         {
-            await Configuration.Desktop.AddFromServer(desktopNames);
+            await configurationSynchronizationService.Receive(config);
         }
 
         [HubCallable]

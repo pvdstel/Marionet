@@ -1,6 +1,7 @@
 ﻿using Marionet.Core.Communication;
 using Marionet.Core.Input;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -8,7 +9,7 @@ namespace Marionet.Core
 {
     public partial class Workspace
     {
-        private async void OnClientConnected(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnClientConnected(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
 
@@ -21,6 +22,7 @@ namespace Marionet.Core
             await mutableStateLock.WaitAsync();
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             string? activeDisplayId = null;
             if (controlling != null)
             {
@@ -28,8 +30,8 @@ namespace Marionet.Core
             }
 
             DebugMessage($"adding client {desktopName}");
-            desktops.Add(new Desktop() { Name = desktopName });
-            displayLayout = CreateDisplayLayout(configurationProvider.GetDesktopOrder());
+            connectedDesktops.Add(new Desktop(desktopName, ImmutableList<Rectangle>.Empty, null));
+            displayLayout = CreateDisplayLayout();
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)
@@ -39,17 +41,25 @@ namespace Marionet.Core
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
             }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (connect), but state is uncontrolled; updating display to {display}");
+            }
 
             mutableStateLock.Release();
         }
 
-        private async void OnClientDisconnected(object sender, ClientConnectionChangedEventArgs e)
+        private async void OnClientDisconnected(object? sender, ClientConnectionChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
 
             string desktopName = e.DesktopName.NormalizeDesktopName();
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             string? activeDisplayId = null;
             if (controlling != null && controlling.ActiveDesktop.Name != desktopName)
             {
@@ -57,8 +67,8 @@ namespace Marionet.Core
             }
 
             DebugMessage($"removing client {desktopName}");
-            desktops = desktops.Where(d => d.Name != desktopName).ToList();
-            displayLayout = new DisplayLayout(desktops);
+            connectedDesktops.RemoveWhere(d => d.Name == desktopName);
+            displayLayout = CreateDisplayLayout();
             DebugPrintDisplays();
 
             if (controlling != null)
@@ -77,16 +87,25 @@ namespace Marionet.Core
                     await ReturnToPrimaryDisplay();
                 }
             }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (disconnect), but state is uncontrolled; updating display to {display}");
+            }
 
             mutableStateLock.Release();
         }
 
-        private async void OnDesktopsChanged(object sender, DesktopsChangedEventArgs e)
+        private async void OnDesktopsChanged(object? sender, DesktopsChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
+            DebugMessage("desktops changed, recomputing");
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             string? activeDisplayId = null;
             if (controlling != null)
             {
@@ -94,7 +113,7 @@ namespace Marionet.Core
             }
 
             DebugMessage("recreating display layout");
-            displayLayout = CreateDisplayLayout(e.Desktops);
+            displayLayout = CreateDisplayLayout();
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)
@@ -105,21 +124,29 @@ namespace Marionet.Core
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
             }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (desktop change), but state is uncontrolled; updating display to {display}");
+            }
 
             mutableStateLock.Release();
         }
 
 
-        private async void OnClientDisplaysChanged(object sender, ClientDisplaysChangedEventArgs e)
+        private async void OnClientDisplaysChanged(object? sender, ClientDisplaysChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
 
             var desktopName = e.DesktopName.NormalizeDesktopName();
-            var desktop = desktops.Find(d => d.Name == desktopName);
+            var desktop = connectedDesktops.FirstOrDefault(d => d.Name == desktopName);
             if (desktop != null)
             {
                 LocalState.Controlling? controlling = localState as LocalState.Controlling;
+                LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
                 string? activeDisplayId = null;
                 if (controlling != null)
                 {
@@ -127,8 +154,9 @@ namespace Marionet.Core
                 }
 
                 DebugMessage($"displays for {desktopName} changed");
-                desktop.Displays = e.Displays;
-                displayLayout = new DisplayLayout(desktops);
+                connectedDesktops.Remove(desktop);
+                connectedDesktops.Add(desktop with { Displays = e.Displays });
+                displayLayout = CreateDisplayLayout();
                 DebugPrintDisplays();
 
                 if (controlling != null && activeDisplayId != null)
@@ -146,31 +174,40 @@ namespace Marionet.Core
                         await ReturnToPrimaryDisplay();
                     }
                 }
+                else if (uncontrolled != null)
+                {
+                    localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                    var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                    localState = new LocalState.Uncontrolled(display, display);
+                    DebugMessage($"detected a global desktop change (client display change), but state is uncontrolled; updating display to {display}");
+                }
             }
 
             mutableStateLock.Release();
         }
 
-        private async void OnDisplaysChanged(object sender, DisplaysChangedEventArgs e)
+        private async void OnDisplaysChanged(object? sender, DisplaysChangedEventArgs e)
         {
             await EnsureInitialized();
             await mutableStateLock.WaitAsync();
 
             LocalState.Controlling? controlling = localState as LocalState.Controlling;
             string? activeDisplayId = null;
+            LocalState.Uncontrolled? uncontrolled = localState as LocalState.Uncontrolled;
             if (controlling != null)
             {
                 activeDisplayId = displayLayout.DisplayIds[controlling.ActiveDisplay];
             }
 
             DebugMessage("own displays changed");
-            selfDesktop.Displays = e.Displays;
-            selfDesktop.PrimaryDisplay = e.PrimaryDisplay;
-            mouseDeltaDebounceValueX = e.PrimaryDisplay.Width / 2;
-            mouseDeltaDebounceValueY = e.PrimaryDisplay.Height / 2;
-            displayLayout = new DisplayLayout(desktops);
+            connectedDesktops.Remove(selfDesktop);
+            selfDesktop = selfDesktop with { Displays = e.Displays, PrimaryDisplay = e.PrimaryDisplay };
+            connectedDesktops.Add(selfDesktop);
+            mouseDeltaDebounceValue = new Point( e.PrimaryDisplay.Width / 3, e.PrimaryDisplay.Height / 3);
+            CreateDisplayLayout();
+
             var allClients = await workspaceNetwork.GetAllClientDesktops();
-            await allClients.DisplaysChanged(e.Displays);
+            await allClients.DisplaysChanged(e.Displays.ToList());
             DebugPrintDisplays();
 
             if (controlling != null && activeDisplayId != null)
@@ -181,6 +218,13 @@ namespace Marionet.Core
                 var displayOriginDeltaY = nextDisplay.Y - controlling.ActiveDisplay.Y;
                 DebugMessage(controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY).ToString());
                 localState = new LocalState.Controlling(controlling.ActiveDesktop, nextDisplay, controlling.CursorPosition.Offset(displayOriginDeltaX, displayOriginDeltaY));
+            }
+            else if (uncontrolled != null)
+            {
+                localCursorPosition = await inputManager.MouseListener.GetCursorPosition();
+                var (_, display) = displayLayout.FindPoint(TranslateLocalToGlobal(localCursorPosition))!.Value;
+                localState = new LocalState.Uncontrolled(display, display);
+                DebugMessage($"detected a global desktop change (local display change), but state is uncontrolled; updating display to {display}");
             }
 
             mutableStateLock.Release();
@@ -199,23 +243,26 @@ namespace Marionet.Core
 
             var primaryDisplay = selfDesktop.PrimaryDisplay!.Value;
             DebugMessage("unblocking local input");
-            inputManager.BlockInput(false);
+            await inputManager.BlockInput(false);
             DebugMessage($"moving to local display {primaryDisplay}");
             var localPoint = new Point(primaryDisplay.Width / 2, primaryDisplay.Height / 2);
             await inputManager.MouseController.MoveMouse(localPoint);
             localState = new LocalState.Uncontrolled(primaryDisplay, selfDesktop.PrimaryDisplay!.Value);
         }
 
-        private DisplayLayout CreateDisplayLayout(List<string> desktopNames)
+        private DisplayLayout CreateDisplayLayout()
         {
-            var desktopOrder = desktopNames.Select(d => d.NormalizeDesktopName()).ToList();
-            var groupedDesktops = desktops.GroupBy(d => desktopOrder.Contains(d.Name)).ToDictionary(k => k.Key, k => k.ToList());
-            desktops = groupedDesktops.ContainsKey(true) ? groupedDesktops[true].OrderBy(d => desktopOrder.IndexOf(d.Name)).ToList() : new List<Desktop>();
+            var desktopOrder = configurationProvider.GetDesktopOrder().Select(d => d.NormalizeDesktopName()).ToList();
+
+            var groupedDesktops = connectedDesktops.GroupBy(d => desktopOrder.Contains(d.Name)).ToDictionary(k => k.Key, k => k.ToImmutableList());
+            List<Desktop> nextDesktops = groupedDesktops.ContainsKey(true) ? groupedDesktops[true].OrderBy(d => desktopOrder.IndexOf(d.Name)).ToList() : new List<Desktop>();
+
             if (groupedDesktops.ContainsKey(false))
             {
-                desktops.AddRange(groupedDesktops[false]);
+                nextDesktops.AddRange(groupedDesktops[false]);
             }
-            return new DisplayLayout(desktops);
+
+            return new DisplayLayout(nextDesktops, configurationProvider.GetDesktopYOffsets());
         }
     }
 }

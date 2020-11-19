@@ -1,38 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 namespace Marionet.Core
 {
-    internal class DisplayLayout
+    public class DisplayLayout
     {
-        private List<Rectangle> displayRectangles = new List<Rectangle>();
-        private Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
-        private Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
-        private Dictionary<Rectangle, string> displayIds = new Dictionary<Rectangle, string>();
-        private Dictionary<string, Rectangle> displayById = new Dictionary<string, Rectangle>();
 
-        public DisplayLayout(IEnumerable<Desktop> desktops)
+        public DisplayLayout(IEnumerable<Desktop> desktops, IDictionary<string, int> yOffsets)
         {
-            Initialize(desktops);
+            if (desktops == null) throw new ArgumentNullException(nameof(desktops));
+            if (yOffsets == null) throw new ArgumentNullException(nameof(yOffsets));
+
+            int xOffset = 0;
+            List<Rectangle> displayRectangles = new List<Rectangle>();
+            Dictionary<Rectangle, Desktop> displayDesktops = new Dictionary<Rectangle, Desktop>();
+            Dictionary<Desktop, Point> desktopOrigins = new Dictionary<Desktop, Point>();
+            Dictionary<Rectangle, string> displayIds = new Dictionary<Rectangle, string>();
+            Dictionary<string, Rectangle> displayById = new Dictionary<string, Rectangle>();
+
+            foreach (Desktop desktop in desktops)
+            {
+                int desktopMinLeft = desktop.Displays.Select(d => d.Left).DefaultIfEmpty(0).Min();
+                int desktopMaxRight = desktop.Displays.Select(d => d.Right).DefaultIfEmpty(0).Max();
+                int desktopWidth = desktopMaxRight - desktopMinLeft;
+                int desktopLeftOffset = -desktopMinLeft;
+
+                if (!yOffsets.TryGetValue(desktop.Name, out int desktopYOffset))
+                {
+                    desktopYOffset = 0;
+                }
+
+                Point desktopOrigin = new Point(xOffset + desktop.PrimaryDisplay.GetValueOrDefault().X + desktopLeftOffset, desktopYOffset);
+                desktopOrigins.Add(desktop, desktopOrigin);
+
+                foreach (Rectangle display in desktop.Displays)
+                {
+                    var displayId = GetDisplayId(desktop, display);
+                    Rectangle rect = display.Offset(desktopOrigin.X, desktopYOffset);
+                    displayRectangles.Add(rect);
+                    displayDesktops.Add(rect, desktop);
+                    displayIds.Add(rect, displayId);
+                    displayById.Add(displayId, rect);
+                }
+
+                xOffset += desktopWidth;
+            }
+
+            DisplayRectangles = displayRectangles.ToImmutableList();
+            DisplayDesktops = displayDesktops.ToImmutableDictionary();
+            DesktopOrigins = desktopOrigins.ToImmutableDictionary();
+            DisplayIds = displayIds.ToImmutableDictionary();
+            DisplayById = displayById.ToImmutableDictionary();
         }
 
-        public ReadOnlyCollection<Rectangle> DisplayRectangles => displayRectangles.AsReadOnly();
+        public ImmutableList<Rectangle> DisplayRectangles { get; private set; }
 
-        public ReadOnlyDictionary<Rectangle, Desktop> DisplayDesktops => new ReadOnlyDictionary<Rectangle, Desktop>(displayDesktops);
+        public ImmutableDictionary<Rectangle, Desktop> DisplayDesktops { get; private set; }
 
-        public ReadOnlyDictionary<Desktop, Point> DesktopOrigins => new ReadOnlyDictionary<Desktop, Point>(desktopOrigins);
-        
-        public ReadOnlyDictionary<Rectangle, string> DisplayIds => new ReadOnlyDictionary<Rectangle, string>(displayIds);
+        public ImmutableDictionary<Desktop, Point> DesktopOrigins { get; private set; }
 
-        public ReadOnlyDictionary<string, Rectangle> DisplayById => new ReadOnlyDictionary<string, Rectangle>(displayById);
+        public ImmutableDictionary<Rectangle, string> DisplayIds { get; private set; }
+
+        public ImmutableDictionary<string, Rectangle> DisplayById { get; private set; }
+
+        public static string GetDisplayId(Desktop desktop, Rectangle display) => $"{desktop}--${display}";
 
         public (Desktop desktop, Rectangle display)? FindPoint(Point point)
         {
             Rectangle? rect = null;
-            foreach (Rectangle r in displayRectangles)
+            foreach (Rectangle r in DisplayRectangles)
             {
                 if (r.Contains(point))
                 {
@@ -43,38 +81,10 @@ namespace Marionet.Core
 
             if (rect.HasValue)
             {
-                return (displayDesktops[rect.Value], rect.Value);
+                return (DisplayDesktops[rect.Value], rect.Value);
             }
 
             return null;
-        }
-
-        private void Initialize(IEnumerable<Desktop> desktops)
-        {
-            int offset = 0;
-
-            foreach (Desktop desktop in desktops)
-            {
-                int desktopMinLeft = desktop.Displays.Select(d => d.Left).DefaultIfEmpty(0).Min();
-                int desktopMaxRight = desktop.Displays.Select(d => d.Right).DefaultIfEmpty(0).Max();
-                int desktopWidth = desktopMaxRight - desktopMinLeft;
-                int desktopLeftOffset = -desktopMinLeft;
-
-                Point desktopOrigin = new Point(offset + desktop.PrimaryDisplay.GetValueOrDefault().X + desktopLeftOffset, 0);
-                desktopOrigins.Add(desktop, desktopOrigin);
-
-                foreach (Rectangle display in desktop.Displays)
-                {
-                    var displayId = $"{desktop}--${display}";
-                    Rectangle rect = display.Offset(offset + desktopLeftOffset, 0);
-                    displayRectangles.Add(rect);
-                    displayDesktops.Add(rect, desktop);
-                    displayIds.Add(rect, displayId);
-                    displayById.Add(displayId, rect);
-                }
-
-                offset = offset + desktopWidth;
-            }
         }
     }
 }

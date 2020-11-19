@@ -37,7 +37,8 @@ namespace Marionet.App.SignalR
             }
 
             Type[] genericTypes = delegateType.GetGenericArguments();
-            Type? returnType = genericTypes.LastOrDefault();
+            Type returnType = genericTypes.Last();
+
             if (genericTypes.Length == 0
                 || (!returnType.Equals(typeof(Task))
                 && (!returnType.IsGenericType || !returnType.GetGenericTypeDefinition().Equals(typeof(Task<>)))))

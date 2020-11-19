@@ -2,12 +2,12 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <Nullable>enable</Nullable>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
-    <ApplicationIcon>..\art\logo.ico</ApplicationIcon>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\logo.ico</ApplicationIcon>
     <Authors>pvdstel</Authors>
-    <Version>0.3.1</Version>
+    <Version>0.5.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -19,27 +19,37 @@
     </AvaloniaResource>
     <AvaloniaResource Include="Assets\**" />
     <AvaloniaResource Remove="UIApp.xaml" />
+    <AvaloniaResource Remove="Views\ErrorMessageWindow.xaml" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Assets\logo.ico" />
     <None Remove="UIApp.xaml" />
+    <None Remove="Views\ErrorMessageWindow.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Assets\logo.ico" />
+    <AvaloniaXaml Include="Views\ErrorMessageWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </AvaloniaXaml>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.9.7" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.9.7" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.7" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
+    <PackageReference Include="Avalonia" Version="0.10.0-preview6" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.0-preview6" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.0-preview6" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Marionet.App\Marionet.App.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="UIApp.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Views\ErrorMessageWindow.xaml.cs">
+      <DependentUpon>ErrorMessageWindow.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>

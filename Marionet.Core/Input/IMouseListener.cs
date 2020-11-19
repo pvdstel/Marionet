@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Marionet.Core.Input
 {
-    public interface IMouseListener
+    public interface IMouseListener : IInputListener
     {
         ValueTask<Point> GetCursorPosition();
 

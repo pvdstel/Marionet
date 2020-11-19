@@ -1,103 +1,51 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Marionet.App.Configuration
 {
-    public class Config
+    public record Config : SynchronizedConfig
     {
         public const int ServerPort = 23549;
-        public const int SettingsWatcherTimeout = 100;
 
-        public static readonly string ConfigurationDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Marionet");
-        public static readonly string ConfigurationFile = Path.Combine(ConfigurationDirectory, "config.json");
+        public string ServerCertificatePath { get; init; } = Path.Combine(ConfigurationService.ConfigurationDirectory, "server.pfx");
 
-        private static readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
-        private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        private static readonly FileSystemWatcher settingsWatcher;
-        private static CancellationTokenSource? reloadEventCancellation;
+        public string ClientCertificatePath { get; init; } = Path.Combine(ConfigurationService.ConfigurationDirectory, "client.pfx");
 
-        static Config()
+        public bool BlockTransferWhenButtonPressed { get; init; } = true;
+
+        public bool ShowTrayIcon { get; init; } = true;
+
+        public int StickyCornerSize { get; init; } = 6;
+
+        public int MinTransferDistance { get; init; } = 10;
+
+        public int MaxTransferDistance { get; init; } = 0;
+
+        public RunConditions RunConditions { get; init; } = new RunConditions();
+
+        public ImmutableDictionary<string, string> DesktopAddresses { get; init; } = ImmutableDictionary<string, string>.Empty.Add(Environment.MachineName, Environment.MachineName);
+
+        public string Self { get; init; } = Environment.MachineName;
+
+        public SynchronizedConfig ToSynchronizedConfig()
         {
-            if (!Directory.Exists(ConfigurationDirectory))
+            return new SynchronizedConfig()
             {
-                Directory.CreateDirectory(ConfigurationDirectory);
-            }
-            settingsWatcher = new FileSystemWatcher(ConfigurationDirectory)
-            {
-                NotifyFilter = NotifyFilters.LastWrite,
-                Filter = "*.json"
+                Desktops = this.Desktops,
+                DesktopYOffsets = this.DesktopYOffsets,
             };
-            settingsWatcher.Changed += SettingsFileChanged;
-            settingsWatcher.EnableRaisingEvents = true;
         }
 
-        public static event EventHandler? SettingsReloaded;
-
-        private static async void SettingsFileChanged(object sender, FileSystemEventArgs e)
+        public Config ApplySynchronizedConfig(SynchronizedConfig synchronizedConfig)
         {
-            if (e.FullPath == ConfigurationFile)
+            if (synchronizedConfig == null) throw new ArgumentNullException(nameof(synchronizedConfig));
+
+            return new Config(this)
             {
-                if (reloadEventCancellation != null)
-                {
-                    reloadEventCancellation.Cancel();
-                    reloadEventCancellation.Dispose();
-                }
-
-                reloadEventCancellation = new CancellationTokenSource();
-                try
-                {
-                    await Task.Delay(SettingsWatcherTimeout, reloadEventCancellation.Token);
-                    await Load();
-                    SettingsReloaded?.Invoke(null, new EventArgs());
-                }
-                catch (TaskCanceledException) { }
-            }
+                Desktops = synchronizedConfig.Desktops,
+                DesktopYOffsets = synchronizedConfig.DesktopYOffsets,
+            };
         }
-
-        public static async Task Save()
-        {
-            await storageLock.WaitAsync();
-            await File.WriteAllTextAsync(ConfigurationFile, JsonSerializer.Serialize(Instance, jsonSerializerOptions));
-            storageLock.Release();
-        }
-
-        public static async Task Load()
-        {
-            await storageLock.WaitAsync();
-            if (!File.Exists(ConfigurationFile))
-            {
-                File.WriteAllText(ConfigurationFile, JsonSerializer.Serialize(Instance, jsonSerializerOptions));
-            }
-            Instance = JsonSerializer.Deserialize<Config>(File.ReadAllText(ConfigurationFile), jsonSerializerOptions);
-            storageLock.Release();
-        }
-
-        private Config() { }
-
-        public static Config Instance { get; private set; } = new Config();
-
-        public string ServerCertificatePath { get; set; } = Path.Combine(ConfigurationDirectory, "server.pfx");
-
-        public string ClientCertificatePath { get; set; } = Path.Combine(ConfigurationDirectory, "client.pfx");
-
-        public string Self { get; set; } = Environment.MachineName;
-
-        public int StickyCornerSize { get; set; } = 6;
-
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Used for serialization.")]
-        public List<string> Desktops { get; set; } = new List<string>() { Environment.MachineName };
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Used for serialization.")]
-        public Dictionary<string, string> DesktopAddresses { get; set; } = new Dictionary<string, string>()
-        {
-            { Environment.MachineName, Environment.MachineName }
-        };
-
-        public RunConditions RunConditions { get; set; } = new RunConditions();
     }
 }

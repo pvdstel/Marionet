@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace Marionet.Core.Communication
 {
     public class DesktopsChangedEventArgs
     {
-        public DesktopsChangedEventArgs(List<string> desktops)
+        public DesktopsChangedEventArgs(ImmutableList<string> desktops)
         {
-            Desktops = desktops;
+            Desktops = desktops ?? throw new System.ArgumentNullException(nameof(desktops));
         }
 
-        public List<string> Desktops { get; }
+        public ImmutableList<string> Desktops { get; }
     }
 }

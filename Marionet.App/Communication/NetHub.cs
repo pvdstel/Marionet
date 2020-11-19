@@ -1,10 +1,12 @@
-﻿using Marionet.App.Core;
+﻿using Marionet.App.Configuration;
+using Marionet.App.Core;
 using Marionet.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Marionet.App.Communication
@@ -12,17 +14,25 @@ namespace Marionet.App.Communication
     [Authorize]
     public class NetHub : Hub<INetClient>
     {
-        private readonly ILogger<NetHub> logger;
+        private readonly Supervisor supervisor;
+        private readonly ConfigurationService configurationService;
         private readonly ClientIdentifierService clientIdentifierService;
         private readonly WorkspaceNetwork workspaceNetwork;
-        private readonly Supervisor supervisor;
+        private readonly ILogger<NetHub> logger;
 
-        public NetHub(ILogger<NetHub> logger, ClientIdentifierService clientIdentifierService, WorkspaceNetwork workspaceNetwork, Supervisor supervisor)
+        public NetHub(
+            Supervisor supervisor,
+            ConfigurationService configurationService,
+            ClientIdentifierService clientIdentifierService,
+            WorkspaceNetwork workspaceNetwork,
+            ILogger<NetHub> logger
+            )
         {
-            this.logger = logger;
-            this.clientIdentifierService = clientIdentifierService;
-            this.workspaceNetwork = workspaceNetwork;
-            this.supervisor = supervisor;
+            this.supervisor = supervisor ?? throw new ArgumentNullException(nameof(supervisor));
+            this.configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+            this.clientIdentifierService = clientIdentifierService ?? throw new ArgumentNullException(nameof(clientIdentifierService));
+            this.workspaceNetwork = workspaceNetwork ?? throw new ArgumentNullException(nameof(workspaceNetwork));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public override Task OnConnectedAsync()
@@ -31,7 +41,7 @@ namespace Marionet.App.Communication
             return base.OnConnectedAsync();
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
             string? desktopName = await clientIdentifierService.GetDesktopName(Context.ConnectionId);
             if (desktopName != null)
@@ -44,11 +54,11 @@ namespace Marionet.App.Communication
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task<IdentifyResult> Identify(string desktopName, List<string> knownNames)
+        public async Task<IdentifyResult> Identify(string desktopName, ImmutableList<string> knownNames)
         {
             if (!(await clientIdentifierService.KnowsConnection(Context.ConnectionId)))
             {
-                await Configuration.Desktop.AddFromClient(knownNames ?? throw new ArgumentNullException(nameof(knownNames)));
+                await configurationService.DesktopManagement.AddFromClient(knownNames ?? throw new ArgumentNullException(nameof(knownNames)));
                 desktopName = desktopName.NormalizeDesktopName();
                 await clientIdentifierService.Add(Context.ConnectionId, desktopName);
                 logger.LogDebug($"Desktop {desktopName} registered on connection {Context.ConnectionId}");
@@ -58,14 +68,21 @@ namespace Marionet.App.Communication
 
             return new IdentifyResult()
             {
-                DesktopName = Configuration.Config.Instance.Self,
-                Desktops = Configuration.Config.Instance.Desktops,
+                DesktopName = configurationService.Configuration.Self,
+                Desktops = new List<string>(configurationService.Configuration.Desktops),
+                DesktopYOffsets = new Dictionary<string, int>(configurationService.Configuration.DesktopYOffsets),
             };
         }
 
-        public async Task ChangeDisplays(List<Rectangle> displays)
+        public async Task ChangeDisplays(ImmutableList<Rectangle> displays)
         {
             string? desktopName = await clientIdentifierService.GetDesktopName(Context.ConnectionId);
+            if (displays == null)
+            {
+                logger.LogError($"Received a null list of displays from client {desktopName}");
+                return;
+            }
+
             if (desktopName != null)
             {
                 workspaceNetwork.ChangeDisplays(desktopName, displays);

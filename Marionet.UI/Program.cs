@@ -1,13 +1,11 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Logging.Serilog;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using Marionet.App;
 using Marionet.UI.Views;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,8 +14,8 @@ namespace Marionet.UI
 {
     public static class Program
     {
-        private const string ShowSignalName = "7e29830a-272c-4354-85e7-1a85a0e6a48c";
-        private const string FirstMutexName = "d0ab88ed-49ac-45f1-b695-1ba3c6d23b1c";
+        private const string ShowSignalName = "Marionet:7e29830a-272c-4354-85e7-1a85a0e6a48c";
+        private const string FirstMutexName = "Marionet:d0ab88ed-49ac-45f1-b695-1ba3c6d23b1c";
 
         private static readonly CancellationTokenSource appShutdownToken = new CancellationTokenSource();
         private static readonly EventWaitHandle signal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSignalName);
@@ -26,7 +24,7 @@ namespace Marionet.UI
 
         public static void Main(string[] args)
         {
-            InvariantArgs = args.Select(a => a.ToUpperInvariant()).ToList().AsReadOnly();
+            InvariantArgs = args.Select(a => a.ToUpperInvariant()).ToImmutableList();
 
             isFirst = new Mutex(false, FirstMutexName, out bool createdNewMutex);
             if (!createdNewMutex || !isFirst.WaitOne(100))
@@ -43,12 +41,7 @@ namespace Marionet.UI
                     .SetupWithoutStarting()
                     .Instance;
 
-                if (InvariantArgs.Contains("START"))
-                {
-                    ShowMainWindow();
-                    _ = Supervisor.StartAsync();
-                }
-                else if (InvariantArgs.Contains("START-SILENT"))
+                if (InvariantArgs.Contains("START-SILENT"))
                 {
                     _ = Supervisor.StartAsync();
                 }
@@ -69,7 +62,6 @@ namespace Marionet.UI
 
         public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<UIApp>()
             .UsePlatformDetect()
-            .LogToDebug()
             .UseReactiveUI();
 
         private static void ShowMainWindow()
@@ -85,9 +77,9 @@ namespace Marionet.UI
         {
             Task.Factory.StartNew(() =>
             {
-                while (true)
+                while (!appShutdownToken.IsCancellationRequested)
                 {
-                    if (signal.WaitOne(10000))
+                    if (signal.WaitOne(5000))
                     {
                         ShowMainWindow();
                     }
@@ -100,6 +92,6 @@ namespace Marionet.UI
             appShutdownToken.Cancel();
         }
 
-        public static ReadOnlyCollection<string> InvariantArgs { get; private set; } = new List<string>().AsReadOnly();
+        public static ImmutableList<string> InvariantArgs { get; private set; } = ImmutableList<string>.Empty;
     }
 }

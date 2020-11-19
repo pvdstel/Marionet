@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Marionet.Core.LocalState
+﻿namespace Marionet.Core.LocalState
 {
-    internal class Relinquished : State
-    {
-    }
+    internal record Relinquished : State;
 }
