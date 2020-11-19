@@ -59,41 +59,41 @@
             </WrapPanel>
             <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsRunningAllowed, Mode=OneWay}">
                 <Ellipse
-                    Width="10"
-                    Height="10"
-                    Margin="3,0,13,0"
+                    Width="12"
+                    Height="12"
+                    Margin="2,0,12,0"
                     Fill="{DynamicResource EnabledBrush}" />
                 <TextBlock Text="The Marionet service is allowed to run." />
             </WrapPanel>
             <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsRunningAllowed, Mode=OneWay}">
                 <Ellipse
-                    Width="10"
-                    Height="10"
-                    Margin="3,0,13,0"
+                    Width="12"
+                    Height="12"
+                    Margin="2,0,12,0"
                     Fill="{DynamicResource DisabledBrush}" />
                 <TextBlock Text="The Marionet service is not allowed to run by the run conditions." />
             </WrapPanel>
             <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsHostRunning, Mode=OneWay}">
                 <Ellipse
-                    Width="10"
-                    Height="10"
-                    Margin="3,0,13,0"
+                    Width="12"
+                    Height="12"
+                    Margin="2,0,12,0"
                     Fill="{DynamicResource RunningBrush}" />
                 <TextBlock Text="The Marionet host is active." />
             </WrapPanel>
             <WrapPanel Margin="0,5,0,0" IsVisible="{Binding !IsHostRunning, Mode=OneWay}">
                 <Ellipse
-                    Width="10"
-                    Height="10"
-                    Margin="3,0,13,0"
+                    Width="12"
+                    Height="12"
+                    Margin="2,0,12,0"
                     Fill="{DynamicResource OffBrush}" />
                 <TextBlock Text="The Marionet host is not active." />
             </WrapPanel>
             <WrapPanel Margin="0,5,0,0" IsVisible="{Binding IsDebug, Mode=OneTime}">
                 <Ellipse
-                    Width="10"
-                    Height="10"
-                    Margin="3,0,13,0"
+                    Width="12"
+                    Height="12"
+                    Margin="2,0,12,0"
                     Fill="{DynamicResource DisabledBrush}" />
                 <TextBlock Text="This is a debug build of Marionet." />
             </WrapPanel>
@@ -161,7 +161,7 @@
             <TextBlock Margin="16,16,16,0" Text="Known desktops" />
             <ListBox
                 Grid.Row="1"
-                Margin="16,8,16,16"
+                Margin="16,8"
                 Items="{Binding KnownHosts, Mode=OneWay}"
                 SelectedItem="{Binding SelectedHost}" />
             <StackPanel
