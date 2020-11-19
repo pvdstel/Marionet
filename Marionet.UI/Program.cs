@@ -41,12 +41,7 @@ namespace Marionet.UI
                     .SetupWithoutStarting()
                     .Instance;
 
-                if (InvariantArgs.Contains("START"))
-                {
-                    ShowMainWindow();
-                    _ = Supervisor.StartAsync();
-                }
-                else if (InvariantArgs.Contains("START-SILENT"))
+                if (InvariantArgs.Contains("START-SILENT"))
                 {
                     _ = Supervisor.StartAsync();
                 }

@@ -1,5 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using Marionet.App;
 using Marionet.UI.Native.Windows;
 using Marionet.UI.ViewModels;
 using System;
@@ -19,6 +21,7 @@ namespace Marionet.UI.Views
         {
             DataContext = vm;
             InitializeComponent();
+            VerifyConfigLoaded();
 
             vm.ExitTriggered += OnViewModelExitTriggered;
 
@@ -30,6 +33,11 @@ namespace Marionet.UI.Views
                     Hide();
                 }
             };
+
+            if (Program.InvariantArgs.Contains("START"))
+            {
+                _ = Supervisor.StartAsync();
+            }
 
             SetUpTrayIcon();
         }
@@ -61,6 +69,14 @@ namespace Marionet.UI.Views
             vm.ConfigurationService.ConfigurationChanged += OnConfigurationChanged;
         }
 
+        private void VerifyConfigLoaded()
+        {
+            if (!Design.IsDesignMode && vm.ConfigurationService.LastConfigurationLoadError != null)
+            {
+                new ErrorMessageWindow(vm.ConfigurationService.LastConfigurationLoadError.ToString()).ShowDialogSync(this);
+            }
+        }
+
         private void OnViewModelExitTriggered(object? sender, EventArgs e)
         {
             Close();
@@ -73,10 +89,14 @@ namespace Marionet.UI.Views
 
         private void OnConfigurationChanged(object? sender, EventArgs e)
         {
-            if (notifyIcon != null)
+            Dispatcher.UIThread.InvokeAsync(() =>
             {
-                notifyIcon.Visible = vm.ConfigurationService.Configuration.ShowTrayIcon;
-            }
+                VerifyConfigLoaded();
+                if (notifyIcon != null)
+                {
+                    notifyIcon.Visible = vm.ConfigurationService.Configuration.ShowTrayIcon;
+                }
+            });
         }
 
         protected override void OnClosed(EventArgs e)

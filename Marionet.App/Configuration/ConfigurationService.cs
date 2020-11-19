@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -16,7 +17,8 @@ namespace Marionet.App.Configuration
         public static readonly Config DefaultConfiguration = new Config();
         private static readonly SemaphoreSlim storageLock = new SemaphoreSlim(1, 1);
 
-        private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
+        private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions()
+        {
             AllowTrailingCommas = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true,
@@ -46,6 +48,8 @@ namespace Marionet.App.Configuration
 
         public Config Configuration { get; private set; } = DefaultConfiguration;
 
+        public Exception? LastConfigurationLoadError { get; private set; } = null;
+
         internal DesktopManagement DesktopManagement { get; }
 
         internal CertificateManagement CertificateManagement { get; }
@@ -67,7 +71,22 @@ namespace Marionet.App.Configuration
                 File.WriteAllText(ConfigurationFile, JsonSerializer.Serialize(DefaultConfiguration, jsonSerializerOptions));
             }
 
-            Configuration = JsonSerializer.Deserialize<Config>(File.ReadAllText(ConfigurationFile), jsonSerializerOptions) ?? new Config();
+            Config? nextConfig = null;
+            try
+            {
+                nextConfig = JsonSerializer.Deserialize<Config>(File.ReadAllText(ConfigurationFile), jsonSerializerOptions);
+            }
+            catch (JsonException ex)
+            {
+                Debug.WriteLine("Encountered a JSON exception while loading the configuration. Using to the default configuration");
+                LastConfigurationLoadError = ex;
+                nextConfig = null;
+            }
+            finally
+            {
+                Configuration = nextConfig ?? DefaultConfiguration;
+            }
+
             storageLock.Release();
         }
 

@@ -20,11 +20,18 @@
     <AvaloniaResource Include="Assets\**" />
     <AvaloniaResource Remove="Assets\tray-icon.ico" />
     <AvaloniaResource Remove="UIApp.xaml" />
+    <AvaloniaResource Remove="Views\ErrorMessageWindow.xaml" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Assets\logo.ico" />
     <None Remove="Assets\tray-icon.ico" />
     <None Remove="UIApp.xaml" />
+    <None Remove="Views\ErrorMessageWindow.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaXaml Include="Views\ErrorMessageWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </AvaloniaXaml>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.10.0-preview6" />
@@ -42,5 +49,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Assets\tray-icon.ico" />
     <EmbeddedResource Include="UIApp.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Views\ErrorMessageWindow.xaml.cs">
+      <DependentUpon>ErrorMessageWindow.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>

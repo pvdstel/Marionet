@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <ApplicationIcon>..\art\logo.ico</ApplicationIcon>
     <Version>0.5.0</Version>
     <Authors>pvdstel</Authors>
