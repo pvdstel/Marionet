@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Shared.PlatformSupport;
 using Avalonia.Threading;
 using Marionet.App;
 using Marionet.UI.Native.Windows;
@@ -55,12 +56,9 @@ namespace Marionet.UI.Views
         {
             if (BasicNotifyIcon.IsSupported())
             {
-                Assembly current = Assembly.GetExecutingAssembly();
-                using Stream? iconStream = current.GetManifestResourceStream("Marionet.UI.Assets.tray-icon.ico");
-                if (iconStream == null)
-                {
-                    throw new FileNotFoundException("The icon resource could not be loaded.");
-                }
+                Assembly uiAssembly = Assembly.GetExecutingAssembly();
+                AssetLoader assetLoader = new AssetLoader(uiAssembly);
+                using Stream? iconStream = assetLoader.Open(new Uri("avares://Marionet.UI/Assets/logo.ico"));
                 trayIconImage = new Icon(iconStream);
                 notifyIcon = new BasicNotifyIcon(trayIconImage)
                 {
