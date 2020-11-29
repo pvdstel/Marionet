@@ -204,7 +204,7 @@ namespace Marionet.Core
             selfDesktop = selfDesktop with { Displays = e.Displays, PrimaryDisplay = e.PrimaryDisplay };
             connectedDesktops.Add(selfDesktop);
             mouseDeltaDebounceValue = new Point( e.PrimaryDisplay.Width / 3, e.PrimaryDisplay.Height / 3);
-            CreateDisplayLayout();
+            displayLayout = CreateDisplayLayout();
 
             var allClients = await workspaceNetwork.GetAllClientDesktops();
             await allClients.DisplaysChanged(e.Displays.ToList());
