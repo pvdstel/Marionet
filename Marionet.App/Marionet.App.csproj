@@ -7,10 +7,11 @@
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <OutputType>Exe</OutputType>
     <ApplicationIcon>..\art\logo.ico</ApplicationIcon>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Authors>pvdstel</Authors>
     <AssemblyName>Marionet.App</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <UserSecretsId>3723a335-4f61-4872-8ba4-21a873af6d95</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
