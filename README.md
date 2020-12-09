@@ -28,7 +28,7 @@ Marionet supports the following configuration options, which can be changed in t
 | `desktops` | `string[]` | The list of known desktops. |
 | `maxTransferDistance` | `number` | The maximum distance that the cursor may travel onto another desktop before it is allowed to transfer. Must be an integer number. No effect when set to 0. |
 | `minTransferDistance` | `number` | The minimum distance that the cursor must travel onto another desktop before it is allowed to transfer. Must be an integer number. Defaults to 10. No effect when set to 0. |
-| `runConditions` | `object` | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (`boolean`): blocks Marionet from running entirely.</li><li>`allowedSsids` (`string[]`): a whitelist of SSIDs that Marionet may run on.</li></ul> |
+| `runConditions` | `object` | A number of conditions that must be true for Marionet to run. The object has a number of fields: <ul><li>`blockAll` (`boolean`): blocks Marionet from running entirely.</li><li>`allowedSsids` (`string[]`): a whitelist of SSIDs that Marionet may run on.</li><li>`allowedNetworkInterfaces` (`string[]`): a whitelist of network interface names that Marionet may run on.</li></ul> |
 | `self` | `string` | The name of the current node. Defaults to the machine name. |
 | `serverCertificatePath` | `string` | The path to the server certificate file. |
 | `showTrayIcon` | `boolean` | Determines whether Marionet UI displays a tray icon. |

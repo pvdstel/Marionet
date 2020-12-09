@@ -219,12 +219,13 @@ namespace Marionet.App
             var wirelessNetworks = await network.GetWirelessNetworkInterfaces();
             var connectedSsids = wirelessNetworks.Where(n => n.Connected).Select(n => n.SSID).ToList();
             var allowedSsids = configurationService.Configuration.RunConditions.AllowedSsids;
-            if (allowedSsids.Any() && !allowedSsids.Any(ssid => connectedSsids.Contains(ssid)))
-            {
-                return false;
-            }
+            var allowedBySsids = !allowedSsids.Any() || allowedSsids.Any(ssid => connectedSsids.Contains(ssid));
 
-            return true;
+            var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+            var allowedNetworkInterfaces = configurationService.Configuration.RunConditions.AllowedNetworkInterfaces;
+            var allowedByInterface = !allowedNetworkInterfaces.Any() || networkInterfaces.Any(intf => intf.OperationalStatus == OperationalStatus.Up && allowedNetworkInterfaces.Contains(intf.Name));
+
+            return allowedBySsids || allowedByInterface;
         }
 
         private static void UpdateHostRunning(bool running)
