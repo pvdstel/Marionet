@@ -265,7 +265,7 @@ namespace Marionet.App
                              o.ServerCertificate = configurationService.CertificateManagement.ServerCertificate;
                          });
                      });
-                     webBuilder.UseUrls($"https://0.0.0.0:{Config.ServerPort}");
+                     webBuilder.UseUrls($"https://0.0.0.0:{Config.ServerPort}", $"https://[::]:{Config.ServerPort}");
                  });
 
         [System.Diagnostics.Conditional("DEBUG")]
