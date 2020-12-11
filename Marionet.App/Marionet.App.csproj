@@ -7,7 +7,7 @@
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <OutputType>Exe</OutputType>
     <ApplicationIcon>..\art\logo.ico</ApplicationIcon>
-    <Version>0.5.2</Version>
+    <Version>0.6.0</Version>
     <Authors>pvdstel</Authors>
     <AssemblyName>Marionet.App</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
