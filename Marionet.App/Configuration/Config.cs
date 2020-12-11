@@ -24,7 +24,8 @@ namespace Marionet.App.Configuration
 
         public RunConditions RunConditions { get; init; } = new RunConditions();
 
-        public ImmutableDictionary<string, string> DesktopAddresses { get; init; } = ImmutableDictionary<string, string>.Empty.Add(Environment.MachineName, Environment.MachineName);
+        public ImmutableDictionary<string, ImmutableList<string>> DesktopAddresses { get; init; } = 
+            ImmutableDictionary<string, ImmutableList<string>>.Empty.Add(Environment.MachineName, ImmutableList<string>.Empty.Add(Environment.MachineName));
 
         public string Self { get; init; } = Environment.MachineName;
 

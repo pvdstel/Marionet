@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,14 +23,15 @@ namespace Marionet.App.Communication
         private string? serverName;
 
         public NetClient(
-            Uri uri,
+            string name,
+            IEnumerable<string> hosts,
             WorkspaceNetwork workspaceNetwork,
             ConfigurationService configurationService,
             ConfigurationSynchronizationService configurationSynchronizationService,
             ILogger<NetClient> logger,
             IInputManager inputManager,
             Supervisor supervisor
-            ) : base(uri, configurationService, logger)
+            ) : base(name, () => GetUris(hosts), configurationService, logger)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.workspaceNetwork = workspaceNetwork ?? throw new ArgumentNullException(nameof(workspaceNetwork));
@@ -51,6 +53,8 @@ namespace Marionet.App.Communication
             };
             this.Connected += async (sender, e) =>
             {
+                if (Hub == null) { return; }
+
                 var serverIdentity = await Hub.Identify(configurationService.Configuration.Self, configurationService.Configuration.Desktops);
                 if (!serverIdentity.IsValid())
                 {
@@ -208,6 +212,23 @@ namespace Marionet.App.Communication
             catch (OperationCanceledException)
             {
                 return false;
+            }
+        }
+
+        private static async IAsyncEnumerable<Uri> GetUris(IEnumerable<string> hosts)
+        {
+            foreach (var host in hosts)
+            {
+                var resolvedAddresses = await Dns.GetHostAddressesAsync(host);
+                foreach (var ip in resolvedAddresses)
+                {
+                    yield return Utility.GetNetHubUri(ip, Config.ServerPort);
+                }
+            }
+
+            foreach (var host in hosts)
+            {
+                yield return Utility.GetNetHubUri(host, Config.ServerPort);
             }
         }
     }

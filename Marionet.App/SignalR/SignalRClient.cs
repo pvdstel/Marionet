@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -14,71 +15,31 @@ namespace Marionet.App.SignalR
     public abstract class SignalRClient<T>
         where T : new()
     {
-        private readonly HubConnection connection;
-        private readonly Uri uri;
+
+        private const int ConnectionFailureCooldownMs = 30000;
+
+        private readonly string name;
+        private readonly Func<IAsyncEnumerable<Uri>> getUris;
+        private readonly ConfigurationService configurationService;
         private readonly ILogger<SignalRClient<T>> logger;
         private bool retry = false;
+
         private CancellationToken connectCancellationToken = default;
+        private HubConnection? currentConnection;
 
         public SignalRClient(
-            Uri uri,
+            string name,
+            Func<IAsyncEnumerable<Uri>> getUris,
             ConfigurationService configurationService,
             ILogger<SignalRClient<T>> logger)
         {
-            this.uri = uri ?? throw new ArgumentNullException(nameof(uri));
-            if (configurationService == null) throw new ArgumentNullException(nameof(configurationService));
+            this.name = name;
+            this.getUris = getUris ?? throw new ArgumentNullException(nameof(getUris));
+            this.configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            
-            connection = new HubConnectionBuilder()
-                //.AddMessagePackProtocol()
-                .WithUrl(uri, options =>
-                    {
-                        options.WebSocketConfiguration = o =>
-                        {
-                            o.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
-                            o.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
-                            {
-                                if (certificate is X509Certificate2 certificate2)
-                                {
-                                    return configurationService.CertificateManagement.IsValidClientCertificate(certificate2);
-                                }
-                                else
-                                {
-                                    throw new ArgumentException("The argument " + nameof(certificate) + "must be of type " + nameof(X509Certificate2) + ".");
-                                }
-                            };
-                        };
-                        options.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
-                        options.HttpMessageHandlerFactory = message =>
-                        {
-                            if (message is HttpClientHandler clientHandler)
-                            {
-                                clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => certificate != null && configurationService.CertificateManagement.IsValidServerCertificate(certificate);
-                                clientHandler.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
-                            }
-                            return message;
-                        };
-                    }
-                ).Build();
-            connection.Closed += async (e) =>
-            {
-                logger.LogWarning($"Connection to {uri} closed");
-                Disconnected?.Invoke(this, new EventArgs());
-                if (retry && !connectCancellationToken.IsCancellationRequested)
-                {
-                    logger.LogDebug($"Reconnecting to {uri}...");
-                    await Connect(connectCancellationToken);
-                }
-                else
-                {
-                    logger.LogDebug($"Not reconnecting to {uri}");
-                }
-            };
-            Hub = CreateHubInterface(connection);
-            RegisterAll();
         }
 
-        public T Hub { get; }
+        public T? Hub { get; private set; }
 
         public event EventHandler? ConnectingStarted;
         public event EventHandler? Connected;
@@ -93,25 +54,61 @@ namespace Marionet.App.SignalR
             {
                 try
                 {
-                    try
+                    var uris = getUris();
+                    await foreach (var uri in uris)
                     {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        cancellationToken.Register(CancelConnection);
-                        logger.LogInformation($"Connecting to {uri}...");
-                        await connection.StartAsync(cancellationToken);
-                        logger.LogInformation($"Connected to {uri}");
-                        Connected?.Invoke(this, new EventArgs());
-                        return;
+                        var (connection, hub) = GetHubConnection(uri);
+                        currentConnection = connection;
+                        Hub = hub;
+
+                        try
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            var cancelRegistration = cancellationToken.Register(async () =>
+                            {
+                                if (connection.State == HubConnectionState.Connected)
+                                {
+                                    await Disconnect();
+                                }
+                            });
+
+                            async Task onConnectionClosed(Exception e)
+                            {
+                                logger.LogWarning($"Connection to {name}@{uri} closed");
+                                await cancelRegistration.DisposeAsync();
+                                await connection.DisposeAsync();
+
+                                Disconnected?.Invoke(this, new EventArgs());
+                                if (retry && !connectCancellationToken.IsCancellationRequested)
+                                {
+                                    logger.LogDebug($"Reconnecting to {name}...");
+                                    await Connect(connectCancellationToken);
+                                }
+                                else
+                                {
+                                    logger.LogDebug($"Not reconnecting to {name}");
+                                }
+                            }
+                            connection.Closed += onConnectionClosed;
+
+
+                            logger.LogInformation($"Connecting to {name}@{uri}...");
+                            await connection.StartAsync(cancellationToken);
+                            logger.LogInformation($"Connected to {name}@{uri}");
+                            Connected?.Invoke(this, new EventArgs());
+                            return;
+                        }
+                        catch (HttpRequestException)
+                        {
+                            logger.LogWarning($"Connection to {name}@{uri} failed");
+                        }
                     }
-                    catch (HttpRequestException)
-                    {
-                        logger.LogWarning($"Connection to {uri} failed. Waiting {10000} ms before retrying");
-                        await Task.Delay(10000, cancellationToken);
-                    }
+                    logger.LogWarning($"All connection attempts to {name} failed. Waiting {ConnectionFailureCooldownMs} ms before retrying");
+                    await Task.Delay(ConnectionFailureCooldownMs, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
-                    logger.LogDebug($"Connection to {uri} aborted");
+                    logger.LogDebug($"Connection attempt to {name} aborted");
                 }
             }
         }
@@ -119,7 +116,49 @@ namespace Marionet.App.SignalR
         public async Task Disconnect()
         {
             retry = false;
-            await connection.StopAsync();
+            if (currentConnection != null)
+            {
+                await currentConnection.StopAsync();
+            }
+        }
+
+        private (HubConnection, T) GetHubConnection(Uri uri)
+        {
+            var connection = new HubConnectionBuilder()
+                   //.AddMessagePackProtocol()
+                   .WithUrl(uri, options =>
+                   {
+                       options.WebSocketConfiguration = o =>
+                       {
+                           o.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
+                           o.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+                           {
+                               if (certificate is X509Certificate2 certificate2)
+                               {
+                                   return configurationService.CertificateManagement.IsValidClientCertificate(certificate2);
+                               }
+                               else
+                               {
+                                   throw new ArgumentException("The argument " + nameof(certificate) + "must be of type " + nameof(X509Certificate2) + ".");
+                               }
+                           };
+                       };
+                       options.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
+                       options.HttpMessageHandlerFactory = message =>
+                       {
+                           if (message is HttpClientHandler clientHandler)
+                           {
+                               clientHandler.ServerCertificateCustomValidationCallback = (m, certificate, chain, policyErrors) => certificate != null && configurationService.CertificateManagement.IsValidServerCertificate(certificate);
+                               clientHandler.ClientCertificates.Add(configurationService.CertificateManagement.ClientCertificate);
+                           }
+                           return message;
+                       };
+                   }
+                   ).Build();
+            var hub = CreateHubInterface(connection);
+            RegisterAll(connection);
+
+            return (connection, hub);
         }
 
         private static T CreateHubInterface(HubConnection connection)
@@ -135,16 +174,8 @@ namespace Marionet.App.SignalR
             return result;
         }
 
-        private async void CancelConnection()
-        {
-            if (connection.State == HubConnectionState.Connected)
-            {
-                await Disconnect();
-            }
-        }
 
-
-        private void RegisterAll()
+        private void RegisterAll(HubConnection connection)
         {
             foreach (MethodInfo method in GetType().GetMethods())
             {

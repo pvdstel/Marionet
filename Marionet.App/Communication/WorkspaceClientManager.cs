@@ -107,16 +107,15 @@ namespace Marionet.App.Communication
                 return;
             }
 
-            var customHostSet = configurationService.Configuration.DesktopAddresses.TryGetValue(desktopName, out string? host);
-            if (!customHostSet || host == null)
+            var customHostSet = configurationService.Configuration.DesktopAddresses.TryGetValue(desktopName, out var hosts);
+            if (!customHostSet || hosts == null)
             {
-                host = desktopName;
+                hosts = System.Collections.Immutable.ImmutableList<string>.Empty.Add(desktopName);
             }
-            logger.LogDebug($"Connecting to {host} for {desktopName}");
 
-            var uri = Utility.GetNetHubUri(host, Config.ServerPort);
-            logger.LogDebug($"Adding client for {uri}");
-            NetClient client = new NetClient(uri, workspaceNetwork, configurationService, configurationSynchronizationService, clientLogger, inputManager, supervisor);
+            logger.LogDebug($"Adding client for {desktopName} ({string.Join(", ", hosts)}) for {desktopName}");
+
+            NetClient client = new NetClient(desktopName, hosts, workspaceNetwork, configurationService, configurationSynchronizationService, clientLogger, inputManager, supervisor);
             clients.Add(desktopName.NormalizeDesktopName(), client);
             _ = client.Connect(hostApplicationLifetime.ApplicationStopping);
         }
