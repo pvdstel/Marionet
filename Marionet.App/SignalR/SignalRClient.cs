@@ -88,7 +88,6 @@ namespace Marionet.App.SignalR
         {
             retry = true;
             connectCancellationToken = cancellationToken;
-            int cooldown = 1000;
             ConnectingStarted?.Invoke(this, new EventArgs());
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -106,9 +105,8 @@ namespace Marionet.App.SignalR
                     }
                     catch (HttpRequestException)
                     {
-                        logger.LogWarning($"Connection to {uri} failed. Waiting {cooldown} ms before retrying");
-                        await Task.Delay(cooldown, cancellationToken);
-                        cooldown = Math.Min(60000, cooldown * 2);
+                        logger.LogWarning($"Connection to {uri} failed. Waiting {10000} ms before retrying");
+                        await Task.Delay(10000, cancellationToken);
                     }
                 }
                 catch (OperationCanceledException)
