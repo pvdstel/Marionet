@@ -24,7 +24,7 @@ Marionet supports the following configuration options, which can be changed in t
 | `blockTransferWhenButtonPressed` | `boolean` | Whether transferring control to another desktop is blocked when a button (keyboard or mouse) is currently being pressed. Defaults to true. |
 | `clientCertificatePath` | `string` | The path to the client certificate file. |
 | `desktopYOffsets` | `object` | A dictionary specifying the Y offset of each desktop, to align them vertically. Each field of the object must have a value of the `number` type, specifically integers. Defaults to 0 if not specified. |
-| `desktopAddresses` | `object` | A map with desktop names as keys and network addresses as values. Can be used to speed up connections. If a desktop is not specified, its name is used. |
+| `desktopAddresses` | `object` | A map with desktop names as keys and a list of network addresses (strings) as values. Can be used to speed up connections. If a desktop is not specified, its name is used for the connection (and DNS resolution). |
 | `desktops` | `string[]` | The list of known desktops. |
 | `maxTransferDistance` | `number` | The maximum distance that the cursor may travel onto another desktop before it is allowed to transfer. Must be an integer number. No effect when set to 0. |
 | `minTransferDistance` | `number` | The minimum distance that the cursor must travel onto another desktop before it is allowed to transfer. Must be an integer number. Defaults to 10. No effect when set to 0. |
