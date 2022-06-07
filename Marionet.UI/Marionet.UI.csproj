@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <Nullable>enable</Nullable>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <CodeAnalysisRuleSet>..\Style.ruleset</CodeAnalysisRuleSet>
     <ApplicationIcon>Assets\logo.ico</ApplicationIcon>
     <Authors>pvdstel</Authors>
